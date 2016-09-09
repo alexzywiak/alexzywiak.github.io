@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Unit Testing React/Redux</title>
+    <meta name="description" content="" />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=1699e20377" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
+
+    <link rel="canonical" href="index.html" />
+    <meta name="referrer" content="origin-when-cross-origin" />
+    
+    <meta property="og:site_name" content="Lingua Franca" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Unit Testing React/Redux" />
+    <meta property="og:description" content="One of the beauties of React/Redux&#x27; modular architecture is how damn easy it is to test everything.  Actions are simple functions that return an object given an input, reducers, are pure functions that have predictable results, and React has some awesome Test Utilities for running tests on DOM components." />
+    <meta property="og:url" content="http://localhost:2368/unit-testing-react-redux/" />
+    <meta property="article:published_time" content="2016-03-11T19:55:41.000Z" />
+    <meta property="article:modified_time" content="2016-03-11T19:56:41.000Z" />
+    <meta property="article:tag" content="React" />
+    <meta property="article:tag" content="Webpack" />
+    <meta property="article:tag" content="ES6" />
+    <meta property="article:tag" content="mocha" />
+    <meta property="article:tag" content="testing" />
+    <meta property="article:tag" content="Redux" />
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Unit Testing React/Redux" />
+    <meta name="twitter:description" content="One of the beauties of React/Redux&#x27; modular architecture is how damn easy it is to test everything.  Actions are simple functions that return an object given an input, reducers, are pure functions that have predictable results, and React has some awesome Test Utilities for running tests on DOM components." />
+    <meta name="twitter:url" content="http://localhost:2368/unit-testing-react-redux/" />
+    <meta name="twitter:label1" content="Written by" />
+    <meta name="twitter:data1" content="Alex Zywiak" />
+    <meta name="twitter:label2" content="Filed under" />
+    <meta name="twitter:data2" content="React, Webpack, ES6, mocha, testing, Redux" />
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Lingua Franca",
+        "logo": "http://localhost:2368/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Zywiak",
+        "url": "http://localhost:2368/author/alex/",
+        "sameAs": []
+    },
+    "headline": "Unit Testing React/Redux",
+    "url": "http://localhost:2368/unit-testing-react-redux/",
+    "datePublished": "2016-03-11T19:55:41.000Z",
+    "dateModified": "2016-03-11T19:56:41.000Z",
+    "keywords": "React, Webpack, ES6, mocha, testing, Redux",
+    "description": "One of the beauties of React/Redux&#x27; modular architecture is how damn easy it is to test everything.  Actions are simple functions that return an object given an input, reducers, are pure functions that have predictable results, and React has some awesome Test Utilities for running tests on DOM components."
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.9" />
+    <link rel="alternate" type="application/rss+xml" title="Lingua Franca" href="../rss/index.html" />
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74247561-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body class="post-template tag-react tag-webpack tag-es6 tag-mocha tag-testing tag-redux nav-closed">
+
+    <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="index.html#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+            <li class="nav-home" role="presentation"><a href="../index.html">Home</a></li>
+            <li class="nav-react" role="presentation"><a href="../tag/react/index.html">React</a></li>
+            <li class="nav-angularjs" role="presentation"><a href="../tag/angularjs/index.html">AngularJS</a></li>
+            <li class="nav-nodejs" role="presentation"><a href="../tag/nodejs/index.html">NodeJS</a></li>
+            <li class="nav-testing" role="presentation"><a href="../tag/testing/index.html">Testing</a></li>
+            <li class="nav-digitalocean" role="presentation"><a href="../tag/digitalocean/index.html">DigitalOcean</a></li>
+            <li class="nav-mysql" role="presentation"><a href="../tag/mysql/index.html">MySQL</a></li>
+            <li class="nav-mongodb" role="presentation"><a href="../tag/mongodb/index.html">MongoDB</a></li>
+    </ul>
+        <a class="subscribe-button icon-feed" href="../rss/index.html">Subscribe</a>
+</div>
+<span class="nav-cover"></span>
+
+
+    <div class="site-wrapper">
+
+        
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        
+            <a class="menu-button icon-menu" href="index.html#"><span class="word">Menu</span></a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+    <article class="post tag-react tag-webpack tag-es6 tag-mocha tag-testing tag-redux">
+
+        <header class="post-header">
+            <h1 class="post-title">Unit Testing React/Redux</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2016-03-11">11 March 2016</time>  on <a href="../tag/react/index.html">React</a>, <a href="../tag/webpack/index.html">Webpack</a>, <a href="../tag/es6/index.html">ES6</a>, <a href="../tag/mocha/index.html">mocha</a>, <a href="../tag/testing/index.html">testing</a>, <a href="../tag/redux/index.html">Redux</a>
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p>One of the beauties of React/Redux' modular architecture is how damn easy it is to test everything.  Actions are simple functions that return an object given an input, reducers, are pure functions that have predictable results, and React has some awesome <a href="https://facebook.github.io/react/docs/test-utils.html">Test Utilities</a> for running tests on DOM components.</p>
+
+<p>In this post, I'm going to walk through how I set up some basic unit tests for my actions, reducers, and components for an example tic-tac-toe application built with React/Redux.  If you want to check out the full application code that I'm referring to, checkout the full <a href="https://github.com/alexzywiak/react-redux-tic-tac-toe">project on GitHub</a>.</p>
+
+<p>To write these tests, I used <a href="https://mochajs.org/">Mocha</a> as my testing framework and <a href="https://www.npmjs.com/package/expect">expect</a> as my assertion library. For testing the React components, I used <a href="https://karma-runner.github.io/0.13/index.html">Karma</a>.</p>
+
+<p><strong>Set up For Action/Reducer Unit Tests</strong></p>
+
+<p>Our files and our tests are written in ES6.  To test them easily, we can tell Mocha to run babel as a compiler.  Our project directory already has a <code>.babelrc</code> file which looks like this:</p>
+
+<pre><code>//.babelrc
+{
+  "presets": ["es2015", "react"]
+}
+</code></pre>
+
+<p>If you want some more info on babel and the <code>.babelrc</code> file, checkout how to set up a React/ES6 build <a href="http://ziviak.net/es6-react-build-tools-using-webpack-and-babel/">here</a>.</p>
+
+<p>We'll make use of a package called <code>babel-register</code> which will hook itself into Node's require statement and will transform files on the fly.  After installing <code>babel-register</code>, we can set up our testing script inside of <code>package.json</code>.</p>
+
+<pre><code>// package.json
+...
+"scripts": {
+    "test": "mocha 'test/mocha/**/*.js' --compilers js:babel-register --recursive"
+},
+...
+</code></pre>
+
+<p>The <code>--compiler</code> flag will run babel-register allowing us to directly test our ES6 files.</p>
+
+<p><strong>Unit Testing Actions</strong></p>
+
+<p>Actions are one link in the Redux chain and because they are simple functions, they are really easy to test.  In the example app, they just pass on the arguments they are given, so we will test for that behavior.</p>
+
+<p>The action we'll test is <code>markSquare</code> which will return an object with type <code>'MARK_SQUARE'</code> and a position object.</p>
+
+<p>Here's the action code:</p>
+
+<pre><code class="language-javascript">// action/index.js
+export const markSquare = (pos) =&gt; {  
+  return {
+    type: 'MARK_SQUARE',
+    pos
+  }
+}
+</code></pre>
+
+<p>To test an action, we'll create an object with out expected outcome, <code>expectedAction</code>, call the action function we're testing with the appropriate arguments, and then compare the actual response with our <code>expectedAction</code>.</p>
+
+<pre><code class="language-javascript">import expect from 'expect';  
+import * as actions from '../../src/action/index';
+
+describe('Actions', () =&gt; {  
+  it('should create a MARK_SQUARE action', () =&gt; {
+
+    const pos = {
+      x:0,
+      y:0
+    };
+
+    const expectedAction = {
+      type: 'MARK_SQUARE',
+      pos
+    };
+
+    expect(actions.markSquare(pos)).toEqual(expectedAction);
+  });
+});
+</code></pre>
+
+<p>This example is trivial, but it's apparent how the structure of Redux is really built for ease of testing.</p>
+
+<p><strong>Testing Reducers</strong></p>
+
+<p>Assuming your building your doing your Redux right, your reducers are pure functions.  Given the same inputs, they'll return the same result.  Again, blissfully easy to test.</p>
+
+<p>We will run tests on two essential features of our reducer.  The first, is to check if it returns the correct initial state if passed an <code>undefined</code> state argument.</p>
+
+<p>The second test, will check that our board reducer responds correctly to a 'MARK<em>SQUARE' action.  Our 'MARK</em>SQUARE' action will pass the board a coordinate pair and a mark to place at that location, ie 'X' at (0, 0).</p>
+
+<p>There are more comprehensive tests as well as the reducer code up on the <a href="https://github.com/alexzywiak/react-redux-tic-tac-toe">GitHub repo</a>.</p>
+
+<pre><code class="language-javascript">import expect from 'expect';  
+import reducer from '../../src/reducer/index';
+
+describe('ticTacToe reducer', () =&gt; {  
+  let state;
+  const initialBoard = [['', '', ''], ['', '', ''], ['', '', '']];
+
+  beforeEach(() =&gt; {
+    state = {
+      board: initialBoard,
+      winner: false,
+      players: ['X', 'O'],
+      turn: 0
+    };
+  });
+
+  it('should return initial state', () =&gt; {
+
+    expect(
+      reducer(undefined, {})
+      ).toEqual(state);
+  });
+
+  it('should mark an empty square', () =&gt; {
+
+    let action = {
+      type: 'MARK_SQUARE',
+      pos: {
+        x: 0,
+        y: 0
+      }
+    }
+
+    let result = reducer(undefined, action)
+
+    expect(
+      result.board[0][0]
+      ).toEqual(
+      'X'
+      );
+  });
+});
+</code></pre>
+
+<p>Redux makes use of lovely pure functions to hold on to its logic, so writing unit tests for them is so easy it feels like cheating.  Aside from a little babel/es6 set up, you can just import your actions and reducers and test away!</p>
+
+<p><strong>Testing React Components</strong></p>
+
+<p>Testing your components takes a little more overhead on the other hand, as they need to be rendered into the DOM.  To do this, I opted to use <a href="https://karma-runner.github.io/0.13/index.html">Karma</a>.  Facebook has created the <a href="https://facebook.github.io/jest/">Jest</a> utility for testing components, but I went with Karma mostly on the fact that Jest mocks everything except the component under test which could lead to some bugs getting missed.  I also ran across issues concerning <a href="https://blog.rescale.com/testing-react-and-flux-applications-with-karma-and-webpack/">speed in Jest</a>.</p>
+
+<p><strong>Karma Set Up</strong></p>
+
+<p>To set up Karma, we're going to integrate it with Webpack to handle our builds and ES6/Babel magic, and Mocha again as our test framework.  This set up will handle testing in Chrome.</p>
+
+<p>I got this set up from the awesome tutorial <a href="https://www.codementor.io/reactjs/tutorial/test-reactjs-components-karma-webpack">here</a>.</p>
+
+<p>To use Karma install the following npm packages:</p>
+
+<pre><code>npm i karma karma-cli karma-chrome-launcher  
+</code></pre>
+
+<p>To get integrated, we'll need to install the following packages so Karma will play nice with Webpack and Mocha.  In addition to our Webpack build packages, we'll need:</p>
+
+<pre><code>npm i karma-webpack karma-sourcemap-loader karma-mocha  
+</code></pre>
+
+<p>We'll need to set up two additional files.</p>
+
+<p>The first is our <code>karma.conf.js</code> file which handles configuration for Karma.  </p>
+
+<pre><code class="language-javascript">var webpack = require('webpack');  
+var path = require('path');
+
+var test_dir = path.resolve(__dirname, 'test/karma');  
+var app_dir = path.resolve(__dirname, 'src');
+
+module.exports = function (config) {  
+  config.set({
+    browsers: [ 'Chrome' ], 
+    singleRun: true, 
+    frameworks: ['mocha'],
+    files: [
+      'tests.webpack.js'
+    ],
+    preprocessors: {
+      'tests.webpack.js': [ 'webpack', 'sourcemap' ]
+    },
+    reporters: [ 'dots' ], 
+    webpack: { 
+      devtool: 'inline-source-map', 
+      module: {
+        loaders: [
+          { test: /\.js$/, include:[test_dir, app_dir], loader: 'babel-loader'}
+        ]
+      }
+    },
+    webpackServer: {
+      noInfo: true 
+    }
+  });
+};
+</code></pre>
+
+<p>The <code>karma-webpack</code> package adds the <code>preprocessors</code> and <code>webpack</code> properties which we can pass to the Karma configuration function allowing us to dynamically compile our files under test.</p>
+
+<p>As our <code>files</code> value, we passed <code>tests.webpack.js</code>.  This file will do some Webpack magic to allow us to dynamically add any test files matching our passed regex expression.  Check out more about dynamic contexts <a href="https://webpack.github.io/docs/context.html#require-context">here</a>.</p>
+
+<pre><code class="language-javascript">var context = require.context('./test/karma', true, /-test\.js$/);  
+context.keys().forEach(context);  
+</code></pre>
+
+<p>Double check your test files and component files are being included in <code>karma.conf.js</code> and the regex from <code>test.webpack.js</code> will match your test files.  Trust me.  Do it.</p>
+
+<p><strong>Component Tests</strong></p>
+
+<p>To test our components we'll make use of the React <a href="https://facebook.github.io/react/docs/test-utils.html">TestUtils</a> library.  TestUtils will handle rendering our components into the DOM, allowing us to grab and test DOM nodes within our components, and, best of all, simulate user interactions.</p>
+
+<p>The first component we'll look at is GameStatus which displays the current turn and the winner if any.  We'll feed in some mock props and check to make sure everything is rendered properly.</p>
+
+<p>The first test is a sanity check to make sure that everything is wired up correctly.  </p>
+
+<p>The second test will set a winner through the props object. Our component should display the winner in an <code>h2</code> tag, so we'll use TestUtils to find the node, get its text content and check it against an expected value.</p>
+
+<pre><code class="language-javascript">import expect from 'expect';  
+import React from 'react';  
+import ReactDOM from 'react-dom';  
+import TestUtils from 'react-addons-test-utils';
+
+// Component to Test
+import GameStatus from '../../src/component/game_status';  
+import Grid from '../../src/component/grid';
+
+describe('Components', () =&gt; {
+
+  describe('Game Status', () =&gt; {
+
+    const gameStatusProps = {
+      players: ['X', 'O'],
+      turn: 0,
+      winner: false
+    };
+
+    it('should render correctly', () =&gt; {
+      var gameStatus = TestUtils.renderIntoDocument(&lt;GameStatus {...gameStatusProps} /&gt;);
+      expect(gameStatus).toExist();
+    });
+
+    it('should display the winner', () =&gt; {
+      gameStatusProps.winner = 'X';
+      var gameStatus = TestUtils.renderIntoDocument(&lt;GameStatus {...gameStatusProps} /&gt;);
+      var h2 = TestUtils.findRenderedDOMComponentWithTag(gameStatus, 'h2');
+      expect(h2.textContent).toEqual('X Wins!');
+    });
+  });
+}); 
+</code></pre>
+
+<p>TestUtil offers a <code>Simulate</code> method which allows us to test user interactions.  Simulate can mock out any user interaction React can deal with such as <code>change</code> or <code>click</code>.  We will test our <code>Grid</code> component to make sure that it's passing the appropriate arguments to our click handler.</p>
+
+<p>First, we'll render our <code>Grid</code> component into the DOM passing it some mocked props including a mocked out click handler function.  Next, we'll grab a reference to the first <code>&lt;td&gt;</code> node on the board, at (0, 0).  Then we will use <code>Simulate</code> to click it, and check the value received by the click handler function to our expected value.</p>
+
+<pre><code class="language-javascript">describe('Grid', () =&gt; {
+
+    let arg;
+
+    const gridProps = {
+      board: [['',''], ['','']],
+      onSquareClick: function(val){
+        arg = val;
+      }
+    }
+
+    it('should return the x and y value of the clicked square', () =&gt; {
+      const grid = TestUtils.renderIntoDocument(&lt;Grid {...gridProps} /&gt;);
+      const square = TestUtils.scryRenderedDOMComponentsWithTag(grid, 'td')[0];
+      TestUtils.Simulate.click(square);
+      expect(arg).toEqual({x:0, y:0});
+    });
+  });
+</code></pre>
+
+<p>The structure of React/Redux apps really push developers towards creating easily testable code.  The pure functions at the heart of Redux, and the modularity underpinning React, really make writing unit tests a breeze with minimal testing overhead so you can focus on writing code, and not your tests.</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/alex/index.html">Alex Zywiak</a></h4>
+
+                    <p>Read <a href="../author/alex/index.html">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=Unit%20Testing%20React%2FRedux&amp;url=http://localhost:2368/unit-testing-react-redux/"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/unit-testing-react-redux/"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/unit-testing-react-redux/"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+
+        </footer>
+
+    </article>
+</main>
+
+<aside class="read-next">
+    <a class="read-next-story no-cover" href="../writing-typescript-typings-files-for-third-party-modules/index.html">
+        <section class="post">
+            <h2>Writing Typescript Typings Files for Third Party Modules</h2>
+            <p>Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a&hellip;</p>
+        </section>
+    </a>
+    <a class="read-next-story prev no-cover" href="../react-redux-a-flash-messenger-example/index.html">
+        <section class="post">
+            <h2>React Redux - A Flash Messenger Example</h2>
+            <p>A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is&hellip;</p>
+        </section>
+    </a>
+</aside>
+
+
+
+        <footer class="site-footer clearfix">
+            <section class="copyright"><a href="../index.html">Lingua Franca</a> &copy; 2016</section>
+            <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+        </footer>
+
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=1699e20377"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=1699e20377"></script>
+
+</body>
+</html>

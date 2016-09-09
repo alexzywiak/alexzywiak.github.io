@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Writing Typescript Typings Files for Third Party Modules</title>
+    <meta name="description" content="" />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=1699e20377" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
+
+    <link rel="canonical" href="index.html" />
+    <meta name="referrer" content="origin-when-cross-origin" />
+    
+    <meta property="og:site_name" content="Lingua Franca" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Writing Typescript Typings Files for Third Party Modules" />
+    <meta property="og:description" content="Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you&#x27;ll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.   One of the snag points" />
+    <meta property="og:url" content="http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/" />
+    <meta property="article:published_time" content="2016-08-31T23:40:02.000Z" />
+    <meta property="article:modified_time" content="2016-08-31T23:49:38.000Z" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Writing Typescript Typings Files for Third Party Modules" />
+    <meta name="twitter:description" content="Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you&#x27;ll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.   One of the snag points" />
+    <meta name="twitter:url" content="http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/" />
+    <meta name="twitter:label1" content="Written by" />
+    <meta name="twitter:data1" content="Alex Zywiak" />
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Lingua Franca",
+        "logo": "http://localhost:2368/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Zywiak",
+        "url": "http://localhost:2368/author/alex/",
+        "sameAs": []
+    },
+    "headline": "Writing Typescript Typings Files for Third Party Modules",
+    "url": "http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/",
+    "datePublished": "2016-08-31T23:40:02.000Z",
+    "dateModified": "2016-08-31T23:49:38.000Z",
+    "description": "Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you&#x27;ll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.   One of the snag points"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.9" />
+    <link rel="alternate" type="application/rss+xml" title="Lingua Franca" href="../rss/index.html" />
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74247561-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body class="post-template nav-closed">
+
+    <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="index.html#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+            <li class="nav-home" role="presentation"><a href="../index.html">Home</a></li>
+            <li class="nav-react" role="presentation"><a href="../tag/react/index.html">React</a></li>
+            <li class="nav-angularjs" role="presentation"><a href="../tag/angularjs/index.html">AngularJS</a></li>
+            <li class="nav-nodejs" role="presentation"><a href="../tag/nodejs/index.html">NodeJS</a></li>
+            <li class="nav-testing" role="presentation"><a href="../tag/testing/index.html">Testing</a></li>
+            <li class="nav-digitalocean" role="presentation"><a href="../tag/digitalocean/index.html">DigitalOcean</a></li>
+            <li class="nav-mysql" role="presentation"><a href="../tag/mysql/index.html">MySQL</a></li>
+            <li class="nav-mongodb" role="presentation"><a href="../tag/mongodb/index.html">MongoDB</a></li>
+    </ul>
+        <a class="subscribe-button icon-feed" href="../rss/index.html">Subscribe</a>
+</div>
+<span class="nav-cover"></span>
+
+
+    <div class="site-wrapper">
+
+        
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        
+            <a class="menu-button icon-menu" href="index.html#"><span class="word">Menu</span></a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+    <article class="post">
+
+        <header class="post-header">
+            <h1 class="post-title">Writing Typescript Typings Files for Third Party Modules</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2016-08-31">31 August 2016</time> 
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p><a href="https://www.typescriptlang.org/">Tyespcript</a> can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  </p>
+
+<p>One of the snag points I ran into was bringing in third party modules.  The vast majority of common npm modules already have high quality typings files which you can manage through <a href="https://www.npmjs.com/package/typings">typings</a>, but inevitably you'll run into that necessary little package that doesn't have the typings you need.</p>
+
+<p>Our project needed one such package, <a href="https://www.npmjs.com/package/googleapis">googleapis</a>.  </p>
+
+<p>In this post I'll go over how to write typings for the <code>generateAuthUrl</code> method which gives a pretty solid overview for how to fill in any other methods you might need.</p>
+
+<p>If you're not the prosaic type and just want to see the example code, check it out on <a href="https://github.com/alexzywiak/typingsOverview">github</a>.</p>
+
+<h5 id="setup">Setup</h5>
+
+<p>Make sure you have <a href="https://www.typescriptlang.org/">typescript</a> set up and installed on your machine.  Create a <code>tsconfig.json</code> file which will dictate our typescript compiler options.  Enter the following settings.</p>
+
+<pre><code>{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "sourceMap": true
+    }
+}
+</code></pre>
+
+<p>Create a <code>main.ts</code> file.  Running <code>tsc</code> in the project directory should compile without errors.</p>
+
+<p>Run <code>npm init</code> and <code>npm install --save googleapis</code> to get the as of yet untyped package.</p>
+
+<p>In the <code>main.ts</code> file add in the following code.</p>
+
+<pre><code>import * as googleApis from 'googleapis';  
+const Oauth2 = googleApis.auth.OAuth2;  
+import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './credentials';
+
+const oauth2Client = new Oauth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+const scopes = [  
+  'https://www.googleapis.com/auth/plus.me',
+  'https://www.googleapis.com/auth/calendar'
+];
+
+const url = oauth2Client.generateAuthUrl({  
+  access_type: 'offline', // 'online' (default) or 'offline' (gets refresh_token) 
+  scope: scopes // If you only need one scope you can pass it as string 
+});
+
+console.log(url);  
+</code></pre>
+
+<p>If you want to test it out, make sure to add in your own google oauth tokens.</p>
+
+<p>As it is, without some sweet typings, this will not compile to js.</p>
+
+<h5 id="creatingdeclarationfiles">Creating Declaration Files</h5>
+
+<p>Create a <code>types</code> directory with the following structure.</p>
+
+<pre><code>types  
+├── googleapis
+│   └── index.d.ts
+└── index.d.ts
+</code></pre>
+
+<p>Typescript interprets <code>*.d.ts</code> files as type declaration files which will describe the shape of an external library without defining implementation details.</p>
+
+<p>In our types directory we have one top level <code>index.d.ts</code> which will hold a reference to each of our module specific declaration files each of which will contain the actual typings for each module.</p>
+
+<p>In this case, <code>types/index.d.ts</code> will hold one reference to the as of yet unwritten <code>googleapis/index.d.ts</code> file.</p>
+
+<pre><code>/// &lt;reference path="googleapis/index.d.ts" /&gt;
+</code></pre>
+
+<p>Depending on your <code>tsconfig.json</code> settings, this file isn't always necessary.  If your <code>types</code> directory is in a sibling or sub directory from <code>tsconfig</code> and you're grabbing all <code>.ts</code> files, typescript will find it for you.  If your project structure is different, you'll have to make sure and include it specifically.</p>
+
+<h4 id="writingtypings">Writing Typings</h4>
+
+<p>All of the typing heavy lifting will be done in <code>types/googleapis/index.d.ts</code>.  The first thing we need to do is create an <a href="https://www.typescriptlang.org/docs/handbook/modules.html">ambient module</a>.  Ambient modules are type declarations that don't define any of the nitty gritty of what the code actually does, but just defines its shape.  We will declare a module with the same name as the npm module.  As the <code>googleapis</code> export is an object, our ambient module will export a <code>const</code> variable implementing an interface that will contain our typings.  This exported typed value can mirror whatever the module exports whether it's a function, object or constructor. </p>
+
+<pre><code>declare module 'googleapis' {
+
+    interface GoogleApi {
+    }
+
+    const GoogleApi: GoogleApi;
+
+    export = GoogleApi;
+}
+</code></pre>
+
+<p>If we attempt to compile <code>main.ts</code> at this point, it will allow us to import <code>googleapis</code>, but, as we haven't defined anything on the interface, <code>tsc</code> will throw an error when we try to access any of <code>googleapis</code> properties or methods.</p>
+
+<p>At this point, it's a matter of ascertaining the shape of the module's properties and the signatures of its methods.</p>
+
+<p>Using the module's <a href="https://www.npmjs.com/package/googleapis">documentation</a>, we need to determine the arguments and the return values so we can assign appropriate types.  </p>
+
+<p>We are interested in the <code>googleapis.auth.Oauth2</code> constructor function, and the <code>generateAuthUrl</code> method on the object that it returns so we can begin by defining the <code>auth</code> property, which returns an object of type <code>Oauth2Constructor</code>.</p>
+
+<pre><code>...
+    interface Oauth2Constructor {
+    }
+
+    interface GoogleApi {
+        auth: {
+            OAuth2: Oauth2Constructor;
+        };
+    }
+
+    const GoogleApi: GoogleApi;
+...
+</code></pre>
+
+<p>The <code>Oauth2Constructor</code> is a newable constructor function, which we can indicate to typescript by including the <code>new</code> keyword in front of its function definition, that requires three strings as arguments. The constructor in turn returns what we'll call the <code>Oauth2Client</code> which has the <code>generateAuthUrl</code> function we're interested in.  Again, using the documentation, we'll define the function signature for the method, extracting out the options argument it requires into its own interface.</p>
+
+<pre><code>...
+    interface UrlOptions {
+        access_type: string;
+        scope: string[];
+    }
+
+    interface Oauth2Client {
+        generateAuthUrl(opts: UrlOptions): string;
+    }
+
+    interface Oauth2Constructor {
+        new (GoogleClientId: string, GoogleClientSecret: string, GoogleCallbackUri: string): Oauth2Client;
+    }
+
+    interface GoogleApi {
+        auth: {
+            OAuth2: Oauth2Constructor;
+        };
+    }
+...
+</code></pre>
+
+<p>That is the essential pattern for writing your own type definition files.  You only need to define the pieces of the module that you are currently using, and can always expand it as you consume more of the module's functionality.</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/alex/index.html">Alex Zywiak</a></h4>
+
+                    <p>Read <a href="../author/alex/index.html">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=Writing%20Typescript%20Typings%20Files%20for%20Third%20Party%20Modules&amp;url=http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+
+        </footer>
+
+    </article>
+</main>
+
+<aside class="read-next">
+    <a class="read-next-story prev no-cover" href="../unit-testing-react-redux/index.html">
+        <section class="post">
+            <h2>Unit Testing React/Redux</h2>
+            <p>One of the beauties of React/Redux' modular architecture is how damn easy it is to test everything.  Actions&hellip;</p>
+        </section>
+    </a>
+</aside>
+
+
+
+        <footer class="site-footer clearfix">
+            <section class="copyright"><a href="../index.html">Lingua Franca</a> &copy; 2016</section>
+            <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+        </footer>
+
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=1699e20377"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=1699e20377"></script>
+
+</body>
+</html>

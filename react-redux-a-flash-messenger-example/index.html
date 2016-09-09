@@ -1,0 +1,442 @@
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>React Redux - A Flash Messenger Example</title>
+    <meta name="description" content="">
+
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=1699e20377">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic%7COpen+Sans:700,400">
+
+    <link rel="canonical" href="index.html">
+    <meta name="referrer" content="origin-when-cross-origin">
+    
+    <meta property="og:site_name" content="Lingua Franca">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="React Redux - A Flash Messenger Example">
+    <meta property="og:description" content="A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is a lot of boilerplate overhead, and the linkages between elements can be a little opaque.  But once you get things going, React and Redux offer a lot of power and an">
+    <meta property="og:url" content="http://localhost:2368/react-redux-a-flash-messenger-example/">
+    <meta property="article:published_time" content="2016-03-06T22:24:06.000Z">
+    <meta property="article:modified_time" content="2016-03-09T02:12:57.000Z">
+    <meta property="article:tag" content="React">
+    <meta property="article:tag" content="Redux">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="React Redux - A Flash Messenger Example">
+    <meta name="twitter:description" content="A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is a lot of boilerplate overhead, and the linkages between elements can be a little opaque.  But once you get things going, React and Redux offer a lot of power and an">
+    <meta name="twitter:url" content="http://localhost:2368/react-redux-a-flash-messenger-example/">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Alex Zywiak">
+    <meta name="twitter:label2" content="Filed under">
+    <meta name="twitter:data2" content="React, Redux">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Lingua Franca",
+        "logo": "http://localhost:2368/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Zywiak",
+        "url": "http://localhost:2368/author/alex/",
+        "sameAs": []
+    },
+    "headline": "React Redux - A Flash Messenger Example",
+    "url": "http://localhost:2368/react-redux-a-flash-messenger-example/",
+    "datePublished": "2016-03-06T22:24:06.000Z",
+    "dateModified": "2016-03-09T02:12:57.000Z",
+    "keywords": "React, Redux",
+    "description": "A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is a lot of boilerplate overhead, and the linkages between elements can be a little opaque.  But once you get things going, React and Redux offer a lot of power and an"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.9">
+    <link rel="alternate" type="application/rss+xml" title="Lingua Franca" href="../rss/index.html">
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74247561-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body class="post-template tag-react tag-redux nav-closed">
+
+    <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="index.html#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+            <li class="nav-home" role="presentation"><a href="../">Home</a></li>
+            <li class="nav-react" role="presentation"><a href="../tag/react/">React</a></li>
+            <li class="nav-angularjs" role="presentation"><a href="../tag/angularjs/">AngularJS</a></li>
+            <li class="nav-nodejs" role="presentation"><a href="../tag/nodejs/">NodeJS</a></li>
+            <li class="nav-testing" role="presentation"><a href="../tag/testing/">Testing</a></li>
+            <li class="nav-digitalocean" role="presentation"><a href="../tag/digitalocean/">DigitalOcean</a></li>
+            <li class="nav-mysql" role="presentation"><a href="../tag/mysql/">MySQL</a></li>
+            <li class="nav-mongodb" role="presentation"><a href="../tag/mongodb/">MongoDB</a></li>
+    </ul>
+        <a class="subscribe-button icon-feed" href="../rss/index.rss">Subscribe</a>
+</div>
+<span class="nav-cover"></span>
+
+
+    <div class="site-wrapper">
+
+        
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        
+            <a class="menu-button icon-menu" href="index.html#"><span class="word">Menu</span></a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+    <article class="post tag-react tag-redux">
+
+        <header class="post-header">
+            <h1 class="post-title">React Redux - A Flash Messenger Example</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2016-03-06">06 March 2016</time>  on <a href="../tag/react/">React</a>, <a href="../tag/redux/">Redux</a>
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p>A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is a lot of boilerplate overhead, and the linkages between elements can be a little opaque.  But once you get things going, React and Redux offer a lot of power and an incredible amount of clarity.  Redux architecture is based around a strict single source of truth held in the application state.  All components tapping into that state are automatically updated with any changes dispatched from anywhere else in the application.</p>
+
+<p>To illustrate these advantages, I'll go through how to set up a simple Flash Message component that will receive and display messages dispatched from anywhere in the application.</p>
+
+<p>If you want to see the full code, checkout the <a href="https://github.com/alexzywiak/react-redux-flash-message-example">project on Github</a>.</p>
+
+<p><strong>App Structure</strong></p>
+
+<p>Create a new directory and get an <code>npm init</code> going.  Install the following packages:</p>
+
+<pre><code>react  
+react-dom  
+redux  
+react-redux  
+</code></pre>
+
+<p>Make sure you have your build system set up using Webpack and Babel.  If you would like a quick run down on that, <a href="http://ziviak.net/es6-react-build-tools-using-webpack-and-babel/">check this out</a>.  </p>
+
+<p>Our app files will live in the <code>src</code> directory and be compiled into the <code>dist</code> directory.  Here's a look at the application structure we'll be using.</p>
+
+<pre><code>├── dist
+│   ├── bundle.js
+│   └── bundle.js.map
+├── index.html
+├── package.json
+├── src
+│   ├── action
+│   │   └── index.js
+│   ├── component
+│   │   ├── app.js
+│   │   ├── flash_message.js
+│   │   └── user_action.js
+│   ├── index.js
+│   └── reducer
+│       ├── index.js
+│       └── reducer_message.js
+└── webpack.config.js
+</code></pre>
+
+<p><strong>Writing Our Action</strong></p>
+
+<p>Actions are the verbs in the Redux vocabulary.  They allow components to dispatch state changes throughout the rest of your application.  The structure of a generic action in Redux is a function that returns an object with two properties, a <code>type</code> string and some kind of <code>payload</code>.  The <code>type</code> property allows the reducers, which receive all actions, to distinguish between actions by matching the string names, while the <code>payload</code> is the data being transmitted.  </p>
+
+<p>We will have a single action, <code>sendFlashMessage</code> which will be a function accepting two parameters, a <code>className</code> and a <code>message</code>.  It will return an object of type <code>'FLASH_MESSAGE'</code> with a payload corresponding to the passed in <code>message</code> and <code>className</code>.</p>
+
+<pre><code class="language-javascript">// action/index.js
+
+export const FLASH_MESSAGE = 'FLASH_MESSAGE';
+
+export const sendFlashMessage = (message, className) =&gt; {
+
+  return {
+    type: FLASH_MESSAGE,
+    payload: {
+      message,
+      className
+    }
+  }
+};
+</code></pre>
+
+<p>Notice the <code>FLASH_MESSAGE</code> variable exported at the top.  This is a common convention with Redux apps as exported variables will let you know when you have a typo instead of trying to match strings as we'll see later when we set up our reducer.</p>
+
+<p><strong>Set Up A Reducer</strong></p>
+
+<p>Reducers are the great state managers in a Redux application.  They receive all the actions and take appropriate steps to modify the application state accordingly.  Reducers are functions that accept two parameters, <code>state</code> and <code>action</code>.  <code>state</code> being the application state and <code>action</code> the current action being passed through.  They get their name from the <code>reduce</code> function where <code>state</code> is the memo object, and <code>action</code> is the action currently being applied.</p>
+
+<p>Reducers must follow a few hard and fast rules:  First, they must be <a href="http://www.sitepoint.com/functional-programming-pure-functions/">pure functions</a> and second, they may not modify the existing scope, but instead  return a modified copy. They must also always return <em>something</em>, generally letting the state pass through unmodified by default.  If a reducer doesn't return anything, the state will be lost when it passes through.</p>
+
+<p>Dive in more at the <a href="http://redux.js.org/docs/basics/Reducers.html">Redux reducer docs</a>.</p>
+
+<p>When designing reducers, it's useful to design your application state first.  Ours will look like this:</p>
+
+<pre><code>{
+  flashMessage: {
+    message: 'message text',
+    className: 'className to apply to message display'
+  }
+}
+</code></pre>
+
+<p>Although our app is exceedingly simple, I'll make use of the <code>combineReducers</code> function from the <code>react-redux</code> library.  This will map a list of reducers to a particular property on the state object.  This practice is common in larger Redux apps as it easily allows numerous reducers split across multiple files to deal only with particular pieces of application state.</p>
+
+<pre><code class="language-javascript">// reducer/index.js
+import {combineReducers} from 'redux';
+
+import messageReducer from './reducer_message';
+
+const rootReducer = combineReducers({  
+  flashMessage: messageReducer
+});
+
+export default rootReducer;  
+</code></pre>
+
+<p>Our reducer will look out for actions with type <code>FLASH_MESSAGE</code> and will pass along the action payload as the value of the <code>flashMessage</code> state property.  To acheive this, reducers commonly contain switch functions to check for the appropriate <code>action.type</code>.  Our reducer will also create a default value for the <code>flashMessage</code> property and will in the default case, return it.</p>
+
+<pre><code class="language-javascript">// reducer reducer_message.js
+import {FLASH_MESSAGE} from '../action/index';
+
+const initialState = {  
+  message: null,
+  className: null
+}
+
+export default (state = initialState, action) =&gt; {  
+  switch(action.type){
+    case FLASH_MESSAGE:
+      return action.payload;
+    default:
+      return state;
+  }
+};
+</code></pre>
+
+<p><strong>Setting Up Our Application</strong></p>
+
+<p>Our app will consist of three components to illustrate how to dispatch actions and how to consume application state changes.</p>
+
+<p>The first is the <code>FlashMessage</code> component which will watch for state changes and will display any flash messages sent.  To set this up, we'll use another function from the <code>react-redux</code> library, <code>connect</code>.  This function will help us map properties on the application state to local props on the component and so will trigger the <code>render</code> function to display any updates.  </p>
+
+<p>The first argument to <code>connect</code> is a function that receives the application state as its parameter.  It should return an object corresponding to all props that should be placed on the current component.  Finally, we'll call <code>connect</code> with the appropriate arguments and export the result as our component.</p>
+
+<pre><code class="language-javascript">// component/flash_message.js
+
+import React, {Component} from 'react';  
+import {connect} from 'react-redux';
+
+class FlashMessage extends Component{
+
+  render(){
+    const {message, className} = this.props.flashMessage;
+    if(!message){
+      return null;
+    }
+
+    return (
+      &lt;div className="row"&gt;
+        &lt;div 
+        className={'col-md-12 alert ' + className} 
+        role="alert"&gt;
+          {message}
+        &lt;/div&gt;
+      &lt;/div&gt;
+    );
+  }
+}
+
+const mapStateToProps = ({flashMessage}) =&gt; {  
+  return {flashMessage};
+};
+
+export default connect(mapStateToProps)(FlashMessage);  
+</code></pre>
+
+<p>Our next component will simulate user interactions and will dispatch actions to our reducer.  We will once again use the <code>connect</code> method to make the <code>sendFlashMessage</code> action we created in <code>action/index.js</code> available to our component.  In addition, we also need to use the <code>bindActionCreators</code> function from <code>redux</code> which will allow the action to be appropriately dispatched to the reducers.</p>
+
+<p><code>connect</code> takes a second function as an argument which will receive the <code>dispatch</code> function as a parameter.  We will pass <code>bindActionCreators</code> two arguments: an object containing all the actions we want to place on the props of the current component, and the <code>dispatch</code> function.  With that taken care of, we can use the action as we normally would through out the component.</p>
+
+<pre><code class="language-javascript">// component use_action.js
+
+import React, {Component} from 'react';  
+import {connect} from 'react-redux';  
+import {bindActionCreators} from 'redux';
+
+import {sendFlashMessage} from '../action/index';
+
+class UserAction extends Component{
+
+  render(){
+    return (
+      &lt;div className="row"&gt;
+
+          &lt;div className="col-md-8 col-md-offset-2"&gt;
+            &lt;div className="btn-group btn-group-justified" role="group"&gt;
+              &lt;div className="btn-group" role="group"&gt;
+                &lt;button
+                onClick={() =&gt; this.props.sendFlashMessage('You win!', 'alert-success')} 
+                className="btn btn-success"&gt;Happy Message&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div className="btn-group" role="group"&gt;
+                &lt;button
+                onClick={() =&gt; this.props.sendFlashMessage('You\'ve been warned', 'alert-warning')} 
+                className="btn btn-warning"&gt;Warning&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div className="btn-group" role="group"&gt;
+                &lt;button
+                onClick={() =&gt; this.props.sendFlashMessage('Way to go...', 'alert-danger')} 
+                className="btn btn-danger"&gt;You Blew It&lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+      &lt;/div&gt;
+    );
+  }
+}
+
+const mapPropsToDispatch = (dispatch) =&gt; {  
+  return bindActionCreators({sendFlashMessage}, dispatch);
+};
+
+export default connect(null, mapPropsToDispatch)(UserAction);  
+</code></pre>
+
+<p>Next, we'll tie these components together in a top level <code>app</code> component.</p>
+
+<pre><code class="language-javascript">// component/app.js
+
+import React from 'react';
+
+import FlashMessage from './flash_message';  
+import UserAction from './user_action';
+
+const App = () =&gt; {  
+  return (
+    &lt;div className="container"&gt;
+      &lt;FlashMessage /&gt;
+      &lt;hr/&gt;
+      &lt;UserAction /&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default App;  
+</code></pre>
+
+<p><strong>Setting Up Redux Store</strong></p>
+
+<p>The last piece is the Redux store.  Actions make things happen, reducers interpret the results of actions and update the state accordingly, but the store is the place that holds everything together.  The store holds onto the application state and allows actions to be dispatched to update that state.</p>
+
+<p>We'll set up the store in <code>index.js</code>, the entry point of our application.  To create our application store, we'll use the <code>createStore</code> function from <code>redux</code>.  All we'll do is pass our <code>rootReducer</code>, as export from <code>reducer/index.js</code> into the <code>createStore</code> function.  We'll also need to make use of the <code>Provider</code> component from the <code>react-redux</code> library so that all of our <code>connect()</code> calls in our components have access to the store.</p>
+
+<pre><code class="language-javascript">// index.js
+
+import React from 'react';  
+import {render} from 'react-dom';  
+import {Provider} from 'react-redux';  
+import {createStore} from 'redux';
+
+import rootReducer from './reducer/index';  
+import App from './component/app';
+
+render(  
+  &lt;Provider store={createStore(rootReducer)}&gt;
+    &lt;App /&gt;
+  &lt;/Provider&gt;,
+  document.getElementById('container')
+);
+</code></pre>
+
+<p><strong>Getting Reduced</strong></p>
+
+<p>OK, great!  We have an action that gets dispatched to the reducers which updates the state which is held in the store which updates our components which displays it on the page!  Wouldn't that example have been way easier with jQuery?  Of course as this example is understandably trivial, but the real power of React and Redux comes in the fact that we could place those actions anywhere in the app.  They could be called in deeply nested components and seamlessly be displayed anywhere in our application.  We could make any number of components have access to the flashMessage property on state, and they would all work as expected.  Redux' single source of truth means that our application state is in perpetual sync and the unified store means that updates in any component get transmitted to any and all components that are interested without having to pass down increasingly long chains of parent and child props and callbacks.  Although there is a lot of overhead and some rather unique logic to wrap your head around initially Redux offers a very elegant solution to managing state in your lovely React apps.</p>
+
+<p>Again, check out the full project code <a href="https://github.com/alexzywiak/react-redux-flash-message-example">here</a>.</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/alex/">Alex Zywiak</a></h4>
+
+                    <p>Read <a href="../author/alex/">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=React%20Redux%20-%20A%20Flash%20Messenger%20Example&amp;url=http://localhost:2368/react-redux-a-flash-messenger-example/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/react-redux-a-flash-messenger-example/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/react-redux-a-flash-messenger-example/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+
+        </footer>
+
+    </article>
+</main>
+
+<aside class="read-next">
+    <a class="read-next-story no-cover" href="../unit-testing-react-redux/">
+        <section class="post">
+            <h2>Unit Testing React/Redux</h2>
+            <p>One of the beauties of React/Redux' modular architecture is how damn easy it is to test everything.  Actions…</p>
+        </section>
+    </a>
+    <a class="read-next-story prev no-cover" href="../es6-react-build-tools-using-webpack-and-babel/">
+        <section class="post">
+            <h2>ES6 React Build Tools Using Webpack and Babel</h2>
+            <p>You get access to some pretty slick syntax with React and ES6, but there is that sticky initial hurdle…</p>
+        </section>
+    </a>
+</aside>
+
+
+
+        <footer class="site-footer clearfix">
+            <section class="copyright"><a href="../">Lingua Franca</a> © 2016</section>
+            <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+        </footer>
+
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=1699e20377"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=1699e20377"></script>
+
+</body>

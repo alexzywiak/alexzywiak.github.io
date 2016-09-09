@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Testing Socket.io With Mocha and Chai</title>
+    <meta name="description" content="" />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=1699e20377" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
+
+    <link rel="canonical" href="index.html" />
+    <meta name="referrer" content="origin-when-cross-origin" />
+    
+    <meta property="og:site_name" content="Lingua Franca" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Testing Socket.io With Mocha and Chai" />
+    <meta property="og:description" content="Socket.io is awesome, but testing it can be a pain in the ass.  It requires a whole bunch of set up, some crucuial tear down.  When working with multiple client connections, which is pretty much the whole point of Socket.io, you&#x27;ll need to listening to a cascading list" />
+    <meta property="og:url" content="http://localhost:2368/testing-socket-io-with-mocha-and-chai/" />
+    <meta property="article:published_time" content="2016-02-24T19:25:06.000Z" />
+    <meta property="article:modified_time" content="2016-03-03T00:10:43.000Z" />
+    <meta property="article:tag" content="mocha" />
+    <meta property="article:tag" content="chai" />
+    <meta property="article:tag" content="testing" />
+    <meta property="article:tag" content="Socket.io" />
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Testing Socket.io With Mocha and Chai" />
+    <meta name="twitter:description" content="Socket.io is awesome, but testing it can be a pain in the ass.  It requires a whole bunch of set up, some crucuial tear down.  When working with multiple client connections, which is pretty much the whole point of Socket.io, you&#x27;ll need to listening to a cascading list" />
+    <meta name="twitter:url" content="http://localhost:2368/testing-socket-io-with-mocha-and-chai/" />
+    <meta name="twitter:label1" content="Written by" />
+    <meta name="twitter:data1" content="Alex Zywiak" />
+    <meta name="twitter:label2" content="Filed under" />
+    <meta name="twitter:data2" content="mocha, chai, testing, Socket.io" />
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Lingua Franca",
+        "logo": "http://localhost:2368/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Zywiak",
+        "url": "http://localhost:2368/author/alex/",
+        "sameAs": []
+    },
+    "headline": "Testing Socket.io With Mocha and Chai",
+    "url": "http://localhost:2368/testing-socket-io-with-mocha-and-chai/",
+    "datePublished": "2016-02-24T19:25:06.000Z",
+    "dateModified": "2016-03-03T00:10:43.000Z",
+    "keywords": "mocha, chai, testing, Socket.io",
+    "description": "Socket.io is awesome, but testing it can be a pain in the ass.  It requires a whole bunch of set up, some crucuial tear down.  When working with multiple client connections, which is pretty much the whole point of Socket.io, you&#x27;ll need to listening to a cascading list"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.9" />
+    <link rel="alternate" type="application/rss+xml" title="Lingua Franca" href="../rss/index.html" />
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74247561-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body class="post-template tag-mocha tag-chai tag-testing tag-socket-io nav-closed">
+
+    <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="index.html#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+            <li class="nav-home" role="presentation"><a href="../index.html">Home</a></li>
+            <li class="nav-react" role="presentation"><a href="../tag/react/index.html">React</a></li>
+            <li class="nav-angularjs" role="presentation"><a href="../tag/angularjs/index.html">AngularJS</a></li>
+            <li class="nav-nodejs" role="presentation"><a href="../tag/nodejs/index.html">NodeJS</a></li>
+            <li class="nav-testing" role="presentation"><a href="../tag/testing/index.html">Testing</a></li>
+            <li class="nav-digitalocean" role="presentation"><a href="../tag/digitalocean/index.html">DigitalOcean</a></li>
+            <li class="nav-mysql" role="presentation"><a href="../tag/mysql/index.html">MySQL</a></li>
+            <li class="nav-mongodb" role="presentation"><a href="../tag/mongodb/index.html">MongoDB</a></li>
+    </ul>
+        <a class="subscribe-button icon-feed" href="../rss/index.html">Subscribe</a>
+</div>
+<span class="nav-cover"></span>
+
+
+    <div class="site-wrapper">
+
+        
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        
+            <a class="menu-button icon-menu" href="index.html#"><span class="word">Menu</span></a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+    <article class="post tag-mocha tag-chai tag-testing tag-socket-io">
+
+        <header class="post-header">
+            <h1 class="post-title">Testing Socket.io With Mocha and Chai</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2016-02-24">24 February 2016</time>  on <a href="../tag/mocha/index.html">mocha</a>, <a href="../tag/chai/index.html">chai</a>, <a href="../tag/testing/index.html">testing</a>, <a href="../tag/socket-io/index.html">Socket.io</a>
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p><a href="http://socket.io/">Socket.io</a> is awesome, but testing it can be a pain in the ass.  It requires a whole bunch of set up, some crucuial tear down.  When working with multiple client connections, which is pretty much the whole point of Socket.io, you'll need to listening to a cascading list of 'connect' events just to make a simple test.  Throw in some <code>setTimeout</code> to check if/how many times something was called, and you have a nasty looking test file.</p>
+
+<p>To deal with all this, I put together <code>socket-tester</code> that takes care of the client set up for you and throws in some helper functions mimicking some simple spy functions.  Check out the repo <a href="https://github.com/alexzywiak/socketTester">here</a>. Likewise, it's available on <code>npm</code>:</p>
+
+<pre><code>npm install socket-tester  
+</code></pre>
+
+<p>In this post, I'll outline the standard way to test Socket.io code using Mocha and Chai, and then how to do it using <code>socket-tester</code>.</p>
+
+<p><strong>The Problem</strong></p>
+
+<p>I'll skip the Express server setup and jump right into the Socket.io relevant code.  Check out the <a href="https://github.com/alexzywiak/socketTester">repo</a> for the full code base.</p>
+
+<p>The code we'll be testing is a brutally simple Socket.io setup.  It allows users to join rooms and send messages to other users in those rooms.  Groundbreaking, I know.</p>
+
+<pre><code class="language-javascript">// socket/socket.config.js
+
+/*jslint node: true */
+'use strict';
+
+module.exports = function(io){
+
+  io.on('connection', function(socket){
+
+    socket.on('join room', function(roomname){
+      socket.roomname = roomname;
+      socket.join(roomname);
+    });
+
+    socket.on('message', function(msg){
+      io.to(socket.roomname).emit('message', msg);
+    });
+
+  });
+
+};
+</code></pre>
+
+<p>I'll go through how to set up three tests for some common use cases without using <code>socket-tester</code>.  If you're interested in going a bit more in depth, <a href="http://liamkaufman.com/blog/2012/01/28/testing-socketio-with-mocha-should-and-socketio-client/">this post</a> really helped me get started.</p>
+
+<p>To run the tests, make sure you have <code>mocha</code> installed globally.  I'm going to use <code>chai</code> as my assertion library and <code>socket.io-client</code> to handle setting up my connections.</p>
+
+<pre><code>npm install mocha -g  
+npm install chai socket.io-client  
+</code></pre>
+
+<p>Next, create a <code>test</code> directory and <code>test.js</code> to hold onto all our tests.  Make sure to include a reference to your server file so it's up and running when you start your tests!  I required and saved the server file as <code>app</code> here.</p>
+
+<p>The basic setup:</p>
+
+<pre><code class="language-javascript">// test/test.js
+
+var expect = require('chai').expect;  
+var io     = require('socket.io-client');
+
+var app = require('../testServer/index');
+
+var socketUrl = 'http://localhost:3000';
+
+var options = {  
+  transports: ['websocket'],
+  'force new connection': true
+};
+
+var room = 'lobby';
+
+describe('Sockets', function () {  
+  var client1, client2, client3;
+
+  // testing goodness goes here
+});
+</code></pre>
+
+<p>Then while in the project directory run:  </p>
+
+<pre><code>mocha -R spec  
+</code></pre>
+
+<p>There are four main steps in testing Socket.io code.  First, set up the connections using <code>socket.io-client</code>.  Second, set up all even listeners.  Third, trigger all the emit events we need to look at.  And last, disconnect all the client connections.</p>
+
+<p>There are of course a few gotchas that come with the territory.  When dealing with multiple clients, later connection events must be done inside of the <code>connection</code> event callback of earlier connections.  Likewise, <code>emit</code> events can only be reliably called when all clients are connected.  This can lead to some cascading listener callbacks when you begin testing multiple clients.</p>
+
+<p>Here's a simple example testing the users can message each other.  Notice the actual test is held inside client1 <code>on 'message'</code> listener.</p>
+
+<pre><code class="language-javascript">// ... test.js
+
+it('should send and receive a message', function (done) {  
+    // Set up client1 connection
+    client1 = io.connect(socketUrl, options);
+
+    // Set up event listener.  This is the actual test we're running
+    client1.on('message', function(msg){
+      expect(msg).to.equal('test');
+
+      // Disconnect both client connections
+      client1.disconnect();
+      client2.disconnect();
+      done();
+    });
+
+    client1.on('connect', function(){
+      client1.emit('join room', room);
+
+      // Set up client2 connection
+      client2 = io.connect(socketUrl, options);
+
+      client2.on('connect', function(){
+
+        // Emit event when all clients are connected.
+        client2.emit('join room', room);
+        client2.emit('message', 'test');
+      });
+
+    });
+  });
+</code></pre>
+
+<p>Not too bad, but a lot of setup and some finicky tear down.  This next test gets even hairier.  I want to test if users in other rooms will hear a message.  <code>client1</code> and <code>client2</code> will be in the same room, and <code>client3</code> will be a different one.  So only <code>client2</code> should hear <code>client1</code> send message.  To track this, I'll use a counter variable to see how many times the event listeners for client2 and 3 were called. Because we're testing for a function that is never supposed to be called, we'll have to run our tests inside of a <code>setTimeout</code> function to wait for all the <code>emit</code> events to finish.</p>
+
+<pre><code class="language-javascript">it('should send and receive a message only to users in the same room', function (done) {  
+    client2CallCount = 0;
+    client3CallCount = 0;
+
+    client1 = io.connect(socketUrl, options);
+
+    client1.on('connect', function(){
+      client1.emit('join room', room);
+
+      client2 = io.connect(socketUrl, options);
+      client2.emit('join room', room);
+
+      client2.on('connect', function(){
+
+        client3 = io.connect(socketUrl, options);
+        client3.emit('join room', 'test');
+
+        client3.on('connect', function(){
+          client1.emit('message', 'test');
+        });
+
+        client3.on('message', function(){
+          client3CallCount++;
+        });
+      });
+
+      client2.on('message', function(){
+        client2CallCount++;
+      });
+    });
+
+    setTimeout(function(){
+      expect(client2CallCount).to.equal(1);
+      expect(client3CallCount).to.equal(0);
+      client1.disconnect();
+      client2.disconnect();
+      client3.disconnect();
+      done();
+    }, 25);
+  });
+</code></pre>
+
+<p>This was about the point I got to when I thought there must be a better way.</p>
+
+<p><strong>Socket-Tester</strong></p>
+
+<p>I put together <code>socket-tester</code> to clean up a lot of the repeated code.  It will take care of all the set up and connection mumbly jumbly, as well as automatically cleaning up the connections for you.  It also adds in some nice helper functions to test common cases such as an event listener that shouldn't be called, or an event listener that should be called n times.</p>
+
+<p>The <code>socket-tester</code> module exposes a constructor function which requires a <code>socket.io-client</code> connection, <code>socketUrl</code>, and <code>socketOptions</code> parameters.  Here's the basic setup.</p>
+
+<pre><code class="language-javascript">var expect = require('chai').expect;  
+var io     = require('socket.io-client');
+
+var app = require('../testServer/index');
+
+var SocketTester = require('../index');
+
+var socketUrl = 'http://localhost:3000';
+
+var options = {  
+  transports: ['websocket'],
+  'force new connection': true
+};
+
+var socketTester = new SocketTester(io, socketUrl, options);  
+var room = 'lobby';
+
+describe('Sockets', function () {
+
+});
+</code></pre>
+
+<p>The syntax is based around <code>socketTester.run()</code> which takes two arguments.  An array of client objects, and Mocha's <code>done</code> function.</p>
+
+<pre><code class="language-javascript">socketTester.run([client1, client2, client3], done);  
+</code></pre>
+
+<p>A client object is setup as follows:  </p>
+
+<pre><code class="language-javascript">var client = {  
+  on: {
+     'event name': &lt;event handler function&gt;
+  },
+  emit: {
+     'event name': &lt;event emit value&gt;
+  }
+};
+</code></pre>
+
+<p>Here are the same tests as above using <code>socket-tester</code>.</p>
+
+<pre><code class="language-javascript">// test.js
+it('should send and receive a message', function(done){  
+    var client1 = {
+      on: {
+        'message': socketTester.shouldBeCalledWith('test')
+      },
+      emit: {
+        'join room': room
+      }
+    };
+
+    var client2 = { 
+      emit: {
+        'join room': room,
+        'message': 'test'
+      }
+    };
+
+    socketTester.run([client1, client2], done);
+  });
+
+  it('should send and recieve a message only to users in the same room', function (done) {
+
+    var client1 = {
+      on: {
+        'message': socketTester.shouldBeCalledNTimes(1)
+      },
+      emit: {
+        'join room': room,
+      }
+    };
+
+    var client2 = {
+      emit: {
+        'join room': room,
+        'message': 'test'
+      }
+    };
+
+    var client3 = { 
+      on: {
+        'message': socketTester.shouldNotBeCalled()
+      },
+      emit: {
+        'join room': 'room'
+      }
+    };
+
+    socketTester.run([client1, client2, client3], done);
+  });
+</code></pre>
+
+<p>I like this approach much better.  It has a flatter structure regardless of how many clients you want to test.  The helper functions also make it much easier to check the most common use cases for Socket.io.</p>
+
+<p>For more info check out the <a href="https://github.com/alexzywiak/socketTester">docs</a>.  I'd love any feedback, let me know what you think!</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/alex/index.html">Alex Zywiak</a></h4>
+
+                    <p>Read <a href="../author/alex/index.html">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=Testing%20Socket.io%20With%20Mocha%20and%20Chai&amp;url=http://localhost:2368/testing-socket-io-with-mocha-and-chai/"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/testing-socket-io-with-mocha-and-chai/"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/testing-socket-io-with-mocha-and-chai/"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+
+        </footer>
+
+    </article>
+</main>
+
+<aside class="read-next">
+    <a class="read-next-story no-cover" href="../es6-react-build-tools-using-webpack-and-babel/index.html">
+        <section class="post">
+            <h2>ES6 React Build Tools Using Webpack and Babel</h2>
+            <p>You get access to some pretty slick syntax with React and ES6, but there is that sticky initial hurdle&hellip;</p>
+        </section>
+    </a>
+    <a class="read-next-story prev no-cover" href="../using-jwts-with-bookshelf-and-angular/index.html">
+        <section class="post">
+            <h2>Using JWTs with Express and Angular</h2>
+            <p>With the advent of Single Page Applications, server side authentication doesn't quite cut it anymore.  JSON Web Tokens are&hellip;</p>
+        </section>
+    </a>
+</aside>
+
+
+
+        <footer class="site-footer clearfix">
+            <section class="copyright"><a href="../index.html">Lingua Franca</a> &copy; 2016</section>
+            <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+        </footer>
+
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=1699e20377"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=1699e20377"></script>
+
+</body>
+</html>

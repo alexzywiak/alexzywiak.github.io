@@ -1,0 +1,2518 @@
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>Lingua Franca</title><description>Javascript and the Web</description><link>http://localhost:2368/</link><generator>Ghost 0.9</generator><lastBuildDate>Fri, 09 Sep 2016 23:07:02 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Writing Typescript Typings Files for Third Party Modules</title><description>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
+
+&lt;p&gt;One of the snag points&lt;/p&gt;</description><link>http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/</link><guid isPermaLink="false">d669282c-ea12-4f57-baf5-d4fb0a521c8d</guid><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 31 Aug 2016 23:40:02 GMT</pubDate><content:encoded>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
+
+&lt;p&gt;One of the snag points I ran into was bringing in third party modules.  The vast majority of common npm modules already have high quality typings files which you can manage through &lt;a href="https://www.npmjs.com/package/typings"&gt;typings&lt;/a&gt;, but inevitably you'll run into that necessary little package that doesn't have the typings you need.&lt;/p&gt;
+
+&lt;p&gt;Our project needed one such package, &lt;a href="https://www.npmjs.com/package/googleapis"&gt;googleapis&lt;/a&gt;.  &lt;/p&gt;
+
+&lt;p&gt;In this post I'll go over how to write typings for the &lt;code&gt;generateAuthUrl&lt;/code&gt; method which gives a pretty solid overview for how to fill in any other methods you might need.&lt;/p&gt;
+
+&lt;p&gt;If you're not the prosaic type and just want to see the example code, check it out on &lt;a href="https://github.com/alexzywiak/typingsOverview"&gt;github&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h5 id="setup"&gt;Setup&lt;/h5&gt;
+
+&lt;p&gt;Make sure you have &lt;a href="https://www.typescriptlang.org/"&gt;typescript&lt;/a&gt; set up and installed on your machine.  Create a &lt;code&gt;tsconfig.json&lt;/code&gt; file which will dictate our typescript compiler options.  Enter the following settings.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "sourceMap": true
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Create a &lt;code&gt;main.ts&lt;/code&gt; file.  Running &lt;code&gt;tsc&lt;/code&gt; in the project directory should compile without errors.&lt;/p&gt;
+
+&lt;p&gt;Run &lt;code&gt;npm init&lt;/code&gt; and &lt;code&gt;npm install --save googleapis&lt;/code&gt; to get the as of yet untyped package.&lt;/p&gt;
+
+&lt;p&gt;In the &lt;code&gt;main.ts&lt;/code&gt; file add in the following code.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;import * as googleApis from 'googleapis';  
+const Oauth2 = googleApis.auth.OAuth2;  
+import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './credentials';
+
+const oauth2Client = new Oauth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+const scopes = [  
+  'https://www.googleapis.com/auth/plus.me',
+  'https://www.googleapis.com/auth/calendar'
+];
+
+const url = oauth2Client.generateAuthUrl({  
+  access_type: 'offline', // 'online' (default) or 'offline' (gets refresh_token) 
+  scope: scopes // If you only need one scope you can pass it as string 
+});
+
+console.log(url);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you want to test it out, make sure to add in your own google oauth tokens.&lt;/p&gt;
+
+&lt;p&gt;As it is, without some sweet typings, this will not compile to js.&lt;/p&gt;
+
+&lt;h5 id="creatingdeclarationfiles"&gt;Creating Declaration Files&lt;/h5&gt;
+
+&lt;p&gt;Create a &lt;code&gt;types&lt;/code&gt; directory with the following structure.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;types  
+├── googleapis
+│   └── index.d.ts
+└── index.d.ts
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Typescript interprets &lt;code&gt;*.d.ts&lt;/code&gt; files as type declaration files which will describe the shape of an external library without defining implementation details.&lt;/p&gt;
+
+&lt;p&gt;In our types directory we have one top level &lt;code&gt;index.d.ts&lt;/code&gt; which will hold a reference to each of our module specific declaration files each of which will contain the actual typings for each module.&lt;/p&gt;
+
+&lt;p&gt;In this case, &lt;code&gt;types/index.d.ts&lt;/code&gt; will hold one reference to the as of yet unwritten &lt;code&gt;googleapis/index.d.ts&lt;/code&gt; file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;/// &amp;lt;reference path="googleapis/index.d.ts" /&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Depending on your &lt;code&gt;tsconfig.json&lt;/code&gt; settings, this file isn't always necessary.  If your &lt;code&gt;types&lt;/code&gt; directory is in a sibling or sub directory from &lt;code&gt;tsconfig&lt;/code&gt; and you're grabbing all &lt;code&gt;.ts&lt;/code&gt; files, typescript will find it for you.  If your project structure is different, you'll have to make sure and include it specifically.&lt;/p&gt;
+
+&lt;h4 id="writingtypings"&gt;Writing Typings&lt;/h4&gt;
+
+&lt;p&gt;All of the typing heavy lifting will be done in &lt;code&gt;types/googleapis/index.d.ts&lt;/code&gt;.  The first thing we need to do is create an &lt;a href="https://www.typescriptlang.org/docs/handbook/modules.html"&gt;ambient module&lt;/a&gt;.  Ambient modules are type declarations that don't define any of the nitty gritty of what the code actually does, but just defines its shape.  We will declare a module with the same name as the npm module.  As the &lt;code&gt;googleapis&lt;/code&gt; export is an object, our ambient module will export a &lt;code&gt;const&lt;/code&gt; variable implementing an interface that will contain our typings.  This exported typed value can mirror whatever the module exports whether it's a function, object or constructor. &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;declare module 'googleapis' {
+
+    interface GoogleApi {
+    }
+
+    const GoogleApi: GoogleApi;
+
+    export = GoogleApi;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If we attempt to compile &lt;code&gt;main.ts&lt;/code&gt; at this point, it will allow us to import &lt;code&gt;googleapis&lt;/code&gt;, but, as we haven't defined anything on the interface, &lt;code&gt;tsc&lt;/code&gt; will throw an error when we try to access any of &lt;code&gt;googleapis&lt;/code&gt; properties or methods.&lt;/p&gt;
+
+&lt;p&gt;At this point, it's a matter of ascertaining the shape of the module's properties and the signatures of its methods.&lt;/p&gt;
+
+&lt;p&gt;Using the module's &lt;a href="https://www.npmjs.com/package/googleapis"&gt;documentation&lt;/a&gt;, we need to determine the arguments and the return values so we can assign appropriate types.  &lt;/p&gt;
+
+&lt;p&gt;We are interested in the &lt;code&gt;googleapis.auth.Oauth2&lt;/code&gt; constructor function, and the &lt;code&gt;generateAuthUrl&lt;/code&gt; method on the object that it returns so we can begin by defining the &lt;code&gt;auth&lt;/code&gt; property, which returns an object of type &lt;code&gt;Oauth2Constructor&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;...
+    interface Oauth2Constructor {
+    }
+
+    interface GoogleApi {
+        auth: {
+            OAuth2: Oauth2Constructor;
+        };
+    }
+
+    const GoogleApi: GoogleApi;
+...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;Oauth2Constructor&lt;/code&gt; is a newable constructor function, which we can indicate to typescript by including the &lt;code&gt;new&lt;/code&gt; keyword in front of its function definition, that requires three strings as arguments. The constructor in turn returns what we'll call the &lt;code&gt;Oauth2Client&lt;/code&gt; which has the &lt;code&gt;generateAuthUrl&lt;/code&gt; function we're interested in.  Again, using the documentation, we'll define the function signature for the method, extracting out the options argument it requires into its own interface.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;...
+    interface UrlOptions {
+        access_type: string;
+        scope: string[];
+    }
+
+    interface Oauth2Client {
+        generateAuthUrl(opts: UrlOptions): string;
+    }
+
+    interface Oauth2Constructor {
+        new (GoogleClientId: string, GoogleClientSecret: string, GoogleCallbackUri: string): Oauth2Client;
+    }
+
+    interface GoogleApi {
+        auth: {
+            OAuth2: Oauth2Constructor;
+        };
+    }
+...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That is the essential pattern for writing your own type definition files.  You only need to define the pieces of the module that you are currently using, and can always expand it as you consume more of the module's functionality.&lt;/p&gt;</content:encoded></item><item><title>Unit Testing React/Redux</title><description>&lt;p&gt;One of the beauties of React/Redux' modular architecture is how damn easy it is to test everything.  Actions are simple functions that return an object given an input, reducers, are pure functions that have predictable results, and React has some awesome &lt;a href="https://facebook.github.io/react/docs/test-utils.html"&gt;Test Utilities&lt;/a&gt; for running tests on DOM components.&lt;/p&gt;</description><link>http://localhost:2368/unit-testing-react-redux/</link><guid isPermaLink="false">1c00b3c9-7b5b-4c8f-866c-d2881f572410</guid><category>React</category><category>Webpack</category><category>ES6</category><category>mocha</category><category>testing</category><category>Redux</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Fri, 11 Mar 2016 19:55:41 GMT</pubDate><content:encoded>&lt;p&gt;One of the beauties of React/Redux' modular architecture is how damn easy it is to test everything.  Actions are simple functions that return an object given an input, reducers, are pure functions that have predictable results, and React has some awesome &lt;a href="https://facebook.github.io/react/docs/test-utils.html"&gt;Test Utilities&lt;/a&gt; for running tests on DOM components.&lt;/p&gt;
+
+&lt;p&gt;In this post, I'm going to walk through how I set up some basic unit tests for my actions, reducers, and components for an example tic-tac-toe application built with React/Redux.  If you want to check out the full application code that I'm referring to, checkout the full &lt;a href="https://github.com/alexzywiak/react-redux-tic-tac-toe"&gt;project on GitHub&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To write these tests, I used &lt;a href="https://mochajs.org/"&gt;Mocha&lt;/a&gt; as my testing framework and &lt;a href="https://www.npmjs.com/package/expect"&gt;expect&lt;/a&gt; as my assertion library. For testing the React components, I used &lt;a href="https://karma-runner.github.io/0.13/index.html"&gt;Karma&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set up For Action/Reducer Unit Tests&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Our files and our tests are written in ES6.  To test them easily, we can tell Mocha to run babel as a compiler.  Our project directory already has a &lt;code&gt;.babelrc&lt;/code&gt; file which looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;//.babelrc
+{
+  "presets": ["es2015", "react"]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you want some more info on babel and the &lt;code&gt;.babelrc&lt;/code&gt; file, checkout how to set up a React/ES6 build &lt;a href="http://ziviak.net/es6-react-build-tools-using-webpack-and-babel/"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;We'll make use of a package called &lt;code&gt;babel-register&lt;/code&gt; which will hook itself into Node's require statement and will transform files on the fly.  After installing &lt;code&gt;babel-register&lt;/code&gt;, we can set up our testing script inside of &lt;code&gt;package.json&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;// package.json
+...
+"scripts": {
+    "test": "mocha 'test/mocha/**/*.js' --compilers js:babel-register --recursive"
+},
+...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;--compiler&lt;/code&gt; flag will run babel-register allowing us to directly test our ES6 files.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Unit Testing Actions&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Actions are one link in the Redux chain and because they are simple functions, they are really easy to test.  In the example app, they just pass on the arguments they are given, so we will test for that behavior.&lt;/p&gt;
+
+&lt;p&gt;The action we'll test is &lt;code&gt;markSquare&lt;/code&gt; which will return an object with type &lt;code&gt;'MARK_SQUARE'&lt;/code&gt; and a position object.&lt;/p&gt;
+
+&lt;p&gt;Here's the action code:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// action/index.js
+export const markSquare = (pos) =&amp;gt; {  
+  return {
+    type: 'MARK_SQUARE',
+    pos
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To test an action, we'll create an object with out expected outcome, &lt;code&gt;expectedAction&lt;/code&gt;, call the action function we're testing with the appropriate arguments, and then compare the actual response with our &lt;code&gt;expectedAction&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;import expect from 'expect';  
+import * as actions from '../../src/action/index';
+
+describe('Actions', () =&amp;gt; {  
+  it('should create a MARK_SQUARE action', () =&amp;gt; {
+
+    const pos = {
+      x:0,
+      y:0
+    };
+
+    const expectedAction = {
+      type: 'MARK_SQUARE',
+      pos
+    };
+
+    expect(actions.markSquare(pos)).toEqual(expectedAction);
+  });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example is trivial, but it's apparent how the structure of Redux is really built for ease of testing.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Testing Reducers&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Assuming your building your doing your Redux right, your reducers are pure functions.  Given the same inputs, they'll return the same result.  Again, blissfully easy to test.&lt;/p&gt;
+
+&lt;p&gt;We will run tests on two essential features of our reducer.  The first, is to check if it returns the correct initial state if passed an &lt;code&gt;undefined&lt;/code&gt; state argument.&lt;/p&gt;
+
+&lt;p&gt;The second test, will check that our board reducer responds correctly to a 'MARK&lt;em&gt;SQUARE' action.  Our 'MARK&lt;/em&gt;SQUARE' action will pass the board a coordinate pair and a mark to place at that location, ie 'X' at (0, 0).&lt;/p&gt;
+
+&lt;p&gt;There are more comprehensive tests as well as the reducer code up on the &lt;a href="https://github.com/alexzywiak/react-redux-tic-tac-toe"&gt;GitHub repo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;import expect from 'expect';  
+import reducer from '../../src/reducer/index';
+
+describe('ticTacToe reducer', () =&amp;gt; {  
+  let state;
+  const initialBoard = [['', '', ''], ['', '', ''], ['', '', '']];
+
+  beforeEach(() =&amp;gt; {
+    state = {
+      board: initialBoard,
+      winner: false,
+      players: ['X', 'O'],
+      turn: 0
+    };
+  });
+
+  it('should return initial state', () =&amp;gt; {
+
+    expect(
+      reducer(undefined, {})
+      ).toEqual(state);
+  });
+
+  it('should mark an empty square', () =&amp;gt; {
+
+    let action = {
+      type: 'MARK_SQUARE',
+      pos: {
+        x: 0,
+        y: 0
+      }
+    }
+
+    let result = reducer(undefined, action)
+
+    expect(
+      result.board[0][0]
+      ).toEqual(
+      'X'
+      );
+  });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Redux makes use of lovely pure functions to hold on to its logic, so writing unit tests for them is so easy it feels like cheating.  Aside from a little babel/es6 set up, you can just import your actions and reducers and test away!&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Testing React Components&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Testing your components takes a little more overhead on the other hand, as they need to be rendered into the DOM.  To do this, I opted to use &lt;a href="https://karma-runner.github.io/0.13/index.html"&gt;Karma&lt;/a&gt;.  Facebook has created the &lt;a href="https://facebook.github.io/jest/"&gt;Jest&lt;/a&gt; utility for testing components, but I went with Karma mostly on the fact that Jest mocks everything except the component under test which could lead to some bugs getting missed.  I also ran across issues concerning &lt;a href="https://blog.rescale.com/testing-react-and-flux-applications-with-karma-and-webpack/"&gt;speed in Jest&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Karma Set Up&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To set up Karma, we're going to integrate it with Webpack to handle our builds and ES6/Babel magic, and Mocha again as our test framework.  This set up will handle testing in Chrome.&lt;/p&gt;
+
+&lt;p&gt;I got this set up from the awesome tutorial &lt;a href="https://www.codementor.io/reactjs/tutorial/test-reactjs-components-karma-webpack"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To use Karma install the following npm packages:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm i karma karma-cli karma-chrome-launcher  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To get integrated, we'll need to install the following packages so Karma will play nice with Webpack and Mocha.  In addition to our Webpack build packages, we'll need:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm i karma-webpack karma-sourcemap-loader karma-mocha  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We'll need to set up two additional files.&lt;/p&gt;
+
+&lt;p&gt;The first is our &lt;code&gt;karma.conf.js&lt;/code&gt; file which handles configuration for Karma.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var webpack = require('webpack');  
+var path = require('path');
+
+var test_dir = path.resolve(__dirname, 'test/karma');  
+var app_dir = path.resolve(__dirname, 'src');
+
+module.exports = function (config) {  
+  config.set({
+    browsers: [ 'Chrome' ], 
+    singleRun: true, 
+    frameworks: ['mocha'],
+    files: [
+      'tests.webpack.js'
+    ],
+    preprocessors: {
+      'tests.webpack.js': [ 'webpack', 'sourcemap' ]
+    },
+    reporters: [ 'dots' ], 
+    webpack: { 
+      devtool: 'inline-source-map', 
+      module: {
+        loaders: [
+          { test: /\.js$/, include:[test_dir, app_dir], loader: 'babel-loader'}
+        ]
+      }
+    },
+    webpackServer: {
+      noInfo: true 
+    }
+  });
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;karma-webpack&lt;/code&gt; package adds the &lt;code&gt;preprocessors&lt;/code&gt; and &lt;code&gt;webpack&lt;/code&gt; properties which we can pass to the Karma configuration function allowing us to dynamically compile our files under test.&lt;/p&gt;
+
+&lt;p&gt;As our &lt;code&gt;files&lt;/code&gt; value, we passed &lt;code&gt;tests.webpack.js&lt;/code&gt;.  This file will do some Webpack magic to allow us to dynamically add any test files matching our passed regex expression.  Check out more about dynamic contexts &lt;a href="https://webpack.github.io/docs/context.html#require-context"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var context = require.context('./test/karma', true, /-test\.js$/);  
+context.keys().forEach(context);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Double check your test files and component files are being included in &lt;code&gt;karma.conf.js&lt;/code&gt; and the regex from &lt;code&gt;test.webpack.js&lt;/code&gt; will match your test files.  Trust me.  Do it.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Component Tests&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To test our components we'll make use of the React &lt;a href="https://facebook.github.io/react/docs/test-utils.html"&gt;TestUtils&lt;/a&gt; library.  TestUtils will handle rendering our components into the DOM, allowing us to grab and test DOM nodes within our components, and, best of all, simulate user interactions.&lt;/p&gt;
+
+&lt;p&gt;The first component we'll look at is GameStatus which displays the current turn and the winner if any.  We'll feed in some mock props and check to make sure everything is rendered properly.&lt;/p&gt;
+
+&lt;p&gt;The first test is a sanity check to make sure that everything is wired up correctly.  &lt;/p&gt;
+
+&lt;p&gt;The second test will set a winner through the props object. Our component should display the winner in an &lt;code&gt;h2&lt;/code&gt; tag, so we'll use TestUtils to find the node, get its text content and check it against an expected value.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;import expect from 'expect';  
+import React from 'react';  
+import ReactDOM from 'react-dom';  
+import TestUtils from 'react-addons-test-utils';
+
+// Component to Test
+import GameStatus from '../../src/component/game_status';  
+import Grid from '../../src/component/grid';
+
+describe('Components', () =&amp;gt; {
+
+  describe('Game Status', () =&amp;gt; {
+
+    const gameStatusProps = {
+      players: ['X', 'O'],
+      turn: 0,
+      winner: false
+    };
+
+    it('should render correctly', () =&amp;gt; {
+      var gameStatus = TestUtils.renderIntoDocument(&amp;lt;GameStatus {...gameStatusProps} /&amp;gt;);
+      expect(gameStatus).toExist();
+    });
+
+    it('should display the winner', () =&amp;gt; {
+      gameStatusProps.winner = 'X';
+      var gameStatus = TestUtils.renderIntoDocument(&amp;lt;GameStatus {...gameStatusProps} /&amp;gt;);
+      var h2 = TestUtils.findRenderedDOMComponentWithTag(gameStatus, 'h2');
+      expect(h2.textContent).toEqual('X Wins!');
+    });
+  });
+}); 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;TestUtil offers a &lt;code&gt;Simulate&lt;/code&gt; method which allows us to test user interactions.  Simulate can mock out any user interaction React can deal with such as &lt;code&gt;change&lt;/code&gt; or &lt;code&gt;click&lt;/code&gt;.  We will test our &lt;code&gt;Grid&lt;/code&gt; component to make sure that it's passing the appropriate arguments to our click handler.&lt;/p&gt;
+
+&lt;p&gt;First, we'll render our &lt;code&gt;Grid&lt;/code&gt; component into the DOM passing it some mocked props including a mocked out click handler function.  Next, we'll grab a reference to the first &lt;code&gt;&amp;lt;td&amp;gt;&lt;/code&gt; node on the board, at (0, 0).  Then we will use &lt;code&gt;Simulate&lt;/code&gt; to click it, and check the value received by the click handler function to our expected value.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;describe('Grid', () =&amp;gt; {
+
+    let arg;
+
+    const gridProps = {
+      board: [['',''], ['','']],
+      onSquareClick: function(val){
+        arg = val;
+      }
+    }
+
+    it('should return the x and y value of the clicked square', () =&amp;gt; {
+      const grid = TestUtils.renderIntoDocument(&amp;lt;Grid {...gridProps} /&amp;gt;);
+      const square = TestUtils.scryRenderedDOMComponentsWithTag(grid, 'td')[0];
+      TestUtils.Simulate.click(square);
+      expect(arg).toEqual({x:0, y:0});
+    });
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The structure of React/Redux apps really push developers towards creating easily testable code.  The pure functions at the heart of Redux, and the modularity underpinning React, really make writing unit tests a breeze with minimal testing overhead so you can focus on writing code, and not your tests.&lt;/p&gt;</content:encoded></item><item><title>React Redux - A Flash Messenger Example</title><description>&lt;p&gt;A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is a lot of boilerplate overhead, and the linkages between elements can be a little opaque.  But once you get things going, React and Redux offer a lot of power and an&lt;/p&gt;</description><link>http://localhost:2368/react-redux-a-flash-messenger-example/</link><guid isPermaLink="false">657f5c80-b1a6-420d-9662-076324b3907b</guid><category>React</category><category>Redux</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Sun, 06 Mar 2016 22:24:06 GMT</pubDate><content:encoded>&lt;p&gt;A React/Redux app can suffer from a steep learning curve and a byzantine tangle of architecture.  There is a lot of boilerplate overhead, and the linkages between elements can be a little opaque.  But once you get things going, React and Redux offer a lot of power and an incredible amount of clarity.  Redux architecture is based around a strict single source of truth held in the application state.  All components tapping into that state are automatically updated with any changes dispatched from anywhere else in the application.&lt;/p&gt;
+
+&lt;p&gt;To illustrate these advantages, I'll go through how to set up a simple Flash Message component that will receive and display messages dispatched from anywhere in the application.&lt;/p&gt;
+
+&lt;p&gt;If you want to see the full code, checkout the &lt;a href="https://github.com/alexzywiak/react-redux-flash-message-example"&gt;project on Github&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;App Structure&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Create a new directory and get an &lt;code&gt;npm init&lt;/code&gt; going.  Install the following packages:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;react  
+react-dom  
+redux  
+react-redux  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Make sure you have your build system set up using Webpack and Babel.  If you would like a quick run down on that, &lt;a href="http://ziviak.net/es6-react-build-tools-using-webpack-and-babel/"&gt;check this out&lt;/a&gt;.  &lt;/p&gt;
+
+&lt;p&gt;Our app files will live in the &lt;code&gt;src&lt;/code&gt; directory and be compiled into the &lt;code&gt;dist&lt;/code&gt; directory.  Here's a look at the application structure we'll be using.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;├── dist
+│   ├── bundle.js
+│   └── bundle.js.map
+├── index.html
+├── package.json
+├── src
+│   ├── action
+│   │   └── index.js
+│   ├── component
+│   │   ├── app.js
+│   │   ├── flash_message.js
+│   │   └── user_action.js
+│   ├── index.js
+│   └── reducer
+│       ├── index.js
+│       └── reducer_message.js
+└── webpack.config.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Writing Our Action&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Actions are the verbs in the Redux vocabulary.  They allow components to dispatch state changes throughout the rest of your application.  The structure of a generic action in Redux is a function that returns an object with two properties, a &lt;code&gt;type&lt;/code&gt; string and some kind of &lt;code&gt;payload&lt;/code&gt;.  The &lt;code&gt;type&lt;/code&gt; property allows the reducers, which receive all actions, to distinguish between actions by matching the string names, while the &lt;code&gt;payload&lt;/code&gt; is the data being transmitted.  &lt;/p&gt;
+
+&lt;p&gt;We will have a single action, &lt;code&gt;sendFlashMessage&lt;/code&gt; which will be a function accepting two parameters, a &lt;code&gt;className&lt;/code&gt; and a &lt;code&gt;message&lt;/code&gt;.  It will return an object of type &lt;code&gt;'FLASH_MESSAGE'&lt;/code&gt; with a payload corresponding to the passed in &lt;code&gt;message&lt;/code&gt; and &lt;code&gt;className&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// action/index.js
+
+export const FLASH_MESSAGE = 'FLASH_MESSAGE';
+
+export const sendFlashMessage = (message, className) =&amp;gt; {
+
+  return {
+    type: FLASH_MESSAGE,
+    payload: {
+      message,
+      className
+    }
+  }
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notice the &lt;code&gt;FLASH_MESSAGE&lt;/code&gt; variable exported at the top.  This is a common convention with Redux apps as exported variables will let you know when you have a typo instead of trying to match strings as we'll see later when we set up our reducer.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set Up A Reducer&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Reducers are the great state managers in a Redux application.  They receive all the actions and take appropriate steps to modify the application state accordingly.  Reducers are functions that accept two parameters, &lt;code&gt;state&lt;/code&gt; and &lt;code&gt;action&lt;/code&gt;.  &lt;code&gt;state&lt;/code&gt; being the application state and &lt;code&gt;action&lt;/code&gt; the current action being passed through.  They get their name from the &lt;code&gt;reduce&lt;/code&gt; function where &lt;code&gt;state&lt;/code&gt; is the memo object, and &lt;code&gt;action&lt;/code&gt; is the action currently being applied.&lt;/p&gt;
+
+&lt;p&gt;Reducers must follow a few hard and fast rules:  First, they must be &lt;a href="http://www.sitepoint.com/functional-programming-pure-functions/"&gt;pure functions&lt;/a&gt; and second, they may not modify the existing scope, but instead  return a modified copy. They must also always return &lt;em&gt;something&lt;/em&gt;, generally letting the state pass through unmodified by default.  If a reducer doesn't return anything, the state will be lost when it passes through.&lt;/p&gt;
+
+&lt;p&gt;Dive in more at the &lt;a href="http://redux.js.org/docs/basics/Reducers.html"&gt;Redux reducer docs&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;When designing reducers, it's useful to design your application state first.  Ours will look like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  flashMessage: {
+    message: 'message text',
+    className: 'className to apply to message display'
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Although our app is exceedingly simple, I'll make use of the &lt;code&gt;combineReducers&lt;/code&gt; function from the &lt;code&gt;react-redux&lt;/code&gt; library.  This will map a list of reducers to a particular property on the state object.  This practice is common in larger Redux apps as it easily allows numerous reducers split across multiple files to deal only with particular pieces of application state.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// reducer/index.js
+import {combineReducers} from 'redux';
+
+import messageReducer from './reducer_message';
+
+const rootReducer = combineReducers({  
+  flashMessage: messageReducer
+});
+
+export default rootReducer;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Our reducer will look out for actions with type &lt;code&gt;FLASH_MESSAGE&lt;/code&gt; and will pass along the action payload as the value of the &lt;code&gt;flashMessage&lt;/code&gt; state property.  To acheive this, reducers commonly contain switch functions to check for the appropriate &lt;code&gt;action.type&lt;/code&gt;.  Our reducer will also create a default value for the &lt;code&gt;flashMessage&lt;/code&gt; property and will in the default case, return it.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// reducer reducer_message.js
+import {FLASH_MESSAGE} from '../action/index';
+
+const initialState = {  
+  message: null,
+  className: null
+}
+
+export default (state = initialState, action) =&amp;gt; {  
+  switch(action.type){
+    case FLASH_MESSAGE:
+      return action.payload;
+    default:
+      return state;
+  }
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Setting Up Our Application&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Our app will consist of three components to illustrate how to dispatch actions and how to consume application state changes.&lt;/p&gt;
+
+&lt;p&gt;The first is the &lt;code&gt;FlashMessage&lt;/code&gt; component which will watch for state changes and will display any flash messages sent.  To set this up, we'll use another function from the &lt;code&gt;react-redux&lt;/code&gt; library, &lt;code&gt;connect&lt;/code&gt;.  This function will help us map properties on the application state to local props on the component and so will trigger the &lt;code&gt;render&lt;/code&gt; function to display any updates.  &lt;/p&gt;
+
+&lt;p&gt;The first argument to &lt;code&gt;connect&lt;/code&gt; is a function that receives the application state as its parameter.  It should return an object corresponding to all props that should be placed on the current component.  Finally, we'll call &lt;code&gt;connect&lt;/code&gt; with the appropriate arguments and export the result as our component.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// component/flash_message.js
+
+import React, {Component} from 'react';  
+import {connect} from 'react-redux';
+
+class FlashMessage extends Component{
+
+  render(){
+    const {message, className} = this.props.flashMessage;
+    if(!message){
+      return null;
+    }
+
+    return (
+      &amp;lt;div className="row"&amp;gt;
+        &amp;lt;div 
+        className={'col-md-12 alert ' + className} 
+        role="alert"&amp;gt;
+          {message}
+        &amp;lt;/div&amp;gt;
+      &amp;lt;/div&amp;gt;
+    );
+  }
+}
+
+const mapStateToProps = ({flashMessage}) =&amp;gt; {  
+  return {flashMessage};
+};
+
+export default connect(mapStateToProps)(FlashMessage);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Our next component will simulate user interactions and will dispatch actions to our reducer.  We will once again use the &lt;code&gt;connect&lt;/code&gt; method to make the &lt;code&gt;sendFlashMessage&lt;/code&gt; action we created in &lt;code&gt;action/index.js&lt;/code&gt; available to our component.  In addition, we also need to use the &lt;code&gt;bindActionCreators&lt;/code&gt; function from &lt;code&gt;redux&lt;/code&gt; which will allow the action to be appropriately dispatched to the reducers.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;connect&lt;/code&gt; takes a second function as an argument which will receive the &lt;code&gt;dispatch&lt;/code&gt; function as a parameter.  We will pass &lt;code&gt;bindActionCreators&lt;/code&gt; two arguments: an object containing all the actions we want to place on the props of the current component, and the &lt;code&gt;dispatch&lt;/code&gt; function.  With that taken care of, we can use the action as we normally would through out the component.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// component use_action.js
+
+import React, {Component} from 'react';  
+import {connect} from 'react-redux';  
+import {bindActionCreators} from 'redux';
+
+import {sendFlashMessage} from '../action/index';
+
+class UserAction extends Component{
+
+  render(){
+    return (
+      &amp;lt;div className="row"&amp;gt;
+
+          &amp;lt;div className="col-md-8 col-md-offset-2"&amp;gt;
+            &amp;lt;div className="btn-group btn-group-justified" role="group"&amp;gt;
+              &amp;lt;div className="btn-group" role="group"&amp;gt;
+                &amp;lt;button
+                onClick={() =&amp;gt; this.props.sendFlashMessage('You win!', 'alert-success')} 
+                className="btn btn-success"&amp;gt;Happy Message&amp;lt;/button&amp;gt;
+              &amp;lt;/div&amp;gt;
+              &amp;lt;div className="btn-group" role="group"&amp;gt;
+                &amp;lt;button
+                onClick={() =&amp;gt; this.props.sendFlashMessage('You\'ve been warned', 'alert-warning')} 
+                className="btn btn-warning"&amp;gt;Warning&amp;lt;/button&amp;gt;
+              &amp;lt;/div&amp;gt;
+              &amp;lt;div className="btn-group" role="group"&amp;gt;
+                &amp;lt;button
+                onClick={() =&amp;gt; this.props.sendFlashMessage('Way to go...', 'alert-danger')} 
+                className="btn btn-danger"&amp;gt;You Blew It&amp;lt;/button&amp;gt;
+              &amp;lt;/div&amp;gt;
+            &amp;lt;/div&amp;gt;
+          &amp;lt;/div&amp;gt;
+
+      &amp;lt;/div&amp;gt;
+    );
+  }
+}
+
+const mapPropsToDispatch = (dispatch) =&amp;gt; {  
+  return bindActionCreators({sendFlashMessage}, dispatch);
+};
+
+export default connect(null, mapPropsToDispatch)(UserAction);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, we'll tie these components together in a top level &lt;code&gt;app&lt;/code&gt; component.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// component/app.js
+
+import React from 'react';
+
+import FlashMessage from './flash_message';  
+import UserAction from './user_action';
+
+const App = () =&amp;gt; {  
+  return (
+    &amp;lt;div className="container"&amp;gt;
+      &amp;lt;FlashMessage /&amp;gt;
+      &amp;lt;hr/&amp;gt;
+      &amp;lt;UserAction /&amp;gt;
+    &amp;lt;/div&amp;gt;
+  );
+};
+
+export default App;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Setting Up Redux Store&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The last piece is the Redux store.  Actions make things happen, reducers interpret the results of actions and update the state accordingly, but the store is the place that holds everything together.  The store holds onto the application state and allows actions to be dispatched to update that state.&lt;/p&gt;
+
+&lt;p&gt;We'll set up the store in &lt;code&gt;index.js&lt;/code&gt;, the entry point of our application.  To create our application store, we'll use the &lt;code&gt;createStore&lt;/code&gt; function from &lt;code&gt;redux&lt;/code&gt;.  All we'll do is pass our &lt;code&gt;rootReducer&lt;/code&gt;, as export from &lt;code&gt;reducer/index.js&lt;/code&gt; into the &lt;code&gt;createStore&lt;/code&gt; function.  We'll also need to make use of the &lt;code&gt;Provider&lt;/code&gt; component from the &lt;code&gt;react-redux&lt;/code&gt; library so that all of our &lt;code&gt;connect()&lt;/code&gt; calls in our components have access to the store.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// index.js
+
+import React from 'react';  
+import {render} from 'react-dom';  
+import {Provider} from 'react-redux';  
+import {createStore} from 'redux';
+
+import rootReducer from './reducer/index';  
+import App from './component/app';
+
+render(  
+  &amp;lt;Provider store={createStore(rootReducer)}&amp;gt;
+    &amp;lt;App /&amp;gt;
+  &amp;lt;/Provider&amp;gt;,
+  document.getElementById('container')
+);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Getting Reduced&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;OK, great!  We have an action that gets dispatched to the reducers which updates the state which is held in the store which updates our components which displays it on the page!  Wouldn't that example have been way easier with jQuery?  Of course as this example is understandably trivial, but the real power of React and Redux comes in the fact that we could place those actions anywhere in the app.  They could be called in deeply nested components and seamlessly be displayed anywhere in our application.  We could make any number of components have access to the flashMessage property on state, and they would all work as expected.  Redux' single source of truth means that our application state is in perpetual sync and the unified store means that updates in any component get transmitted to any and all components that are interested without having to pass down increasingly long chains of parent and child props and callbacks.  Although there is a lot of overhead and some rather unique logic to wrap your head around initially Redux offers a very elegant solution to managing state in your lovely React apps.&lt;/p&gt;
+
+&lt;p&gt;Again, check out the full project code &lt;a href="https://github.com/alexzywiak/react-redux-flash-message-example"&gt;here&lt;/a&gt;.&lt;/p&gt;</content:encoded></item><item><title>ES6 React Build Tools Using Webpack and Babel</title><description>&lt;p&gt;You get access to some pretty slick syntax with React and ES6, but there is that sticky initial hurdle of converting it into something your browser can actually understand.  Fortunately enough, the set up isn't too bad at all using &lt;a href="https://webpack.github.io/"&gt;webpack&lt;/a&gt; and &lt;a href="https://babeljs.io/"&gt;babel&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Get Your Dependencies&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;There are a healthy&lt;/p&gt;</description><link>http://localhost:2368/es6-react-build-tools-using-webpack-and-babel/</link><guid isPermaLink="false">cb75bd96-ca32-4fc7-8561-f72276542c64</guid><category>React</category><category>Webpack</category><category>ES6</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Thu, 03 Mar 2016 00:00:46 GMT</pubDate><content:encoded>&lt;p&gt;You get access to some pretty slick syntax with React and ES6, but there is that sticky initial hurdle of converting it into something your browser can actually understand.  Fortunately enough, the set up isn't too bad at all using &lt;a href="https://webpack.github.io/"&gt;webpack&lt;/a&gt; and &lt;a href="https://babeljs.io/"&gt;babel&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Get Your Dependencies&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;There are a healthy dose of npm packages you need to get started. Here's the overall list.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install --save-dev  
+babel-core  
+babel-loader  
+babel-preset-es2015  
+babel-preset-react  
+webpack  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Set Up Babel Configuration&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Next up, we'll need to create a &lt;code&gt;.babelrc&lt;/code&gt; file.  This acts a configuration file for the Babel transpiler which is what will do the heavy lifting of converting es6 to es5 and React JSX to good old Javascript.  Babel on its own doesn't do a thing, but by including presets, you can make the magic happen.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;.babelrc&lt;/code&gt; is in JSON format, and for our purposes, should look like this:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  "presets": ["es2015", "react"]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will tell babel to run all the code it is passed through these presets, which we installed through npm above.  These presets will take care of transpiling their eponymous code into plain Javascript everyone's browser can understand.&lt;/p&gt;
+
+&lt;p&gt;As it is now, you can convert single files into es5 JS.  As long as you have babel globally installed, you can run:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;babel srcfile -o destfile  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Unfortunately, React apps are more than one file and there are all those ever so useful &lt;code&gt;import&lt;/code&gt; statements to take care of.  Babel can't handle that part on its own, so we can make use of Webpack.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Webpack Configuration&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Webpack will look for a &lt;code&gt;webpack.config.js&lt;/code&gt; file for its configuration options.  Webpack is a module bundler.  It will take a big mess of separate files with a bunch of listed dependencies, and nicely bundle them into a single consumable file.  Webpack also introduces the concept of loaders.  Loaders are similar to tasks in Gulp, and can be associated to any file or file type.  Loaders even allow you to require in non-JS files such as CSS and transform them however necessary.&lt;/p&gt;
+
+&lt;p&gt;The only loader we're concerned with is &lt;code&gt;babel&lt;/code&gt;.  What Webpack will do for us, is run all of our files through &lt;code&gt;babel-loader&lt;/code&gt;, which will use the presets we specified in &lt;code&gt;.babelrc&lt;/code&gt; to convert our ES6 and JSX into plain JS.  Then, Webpack will go through and take care of all the &lt;code&gt;import&lt;/code&gt; statements, or &lt;code&gt;require&lt;/code&gt; as the files are in ES5 now, and bundle everything into a nice single file we can include as the source file in our HTML.&lt;/p&gt;
+
+&lt;p&gt;To unlock the magic, we'll need to set up a &lt;code&gt;webpack.config.js&lt;/code&gt; file.  Like gulp and grunt this is just a regular JS file.  We'll need to specify a few essential things.  &lt;/p&gt;
+
+&lt;p&gt;The first, we'll give Webpack an entry point.  This is the top level file from which all other files are imported in.  &lt;/p&gt;
+
+&lt;p&gt;Next, we'll set up an output file where Webpack will build our bundle.&lt;/p&gt;
+
+&lt;p&gt;Last, we'll specify the loader setup we need to use.  The loaders option allows us to specify which directories we want to target in the &lt;code&gt;include&lt;/code&gt; property.  It also allows us to pass a regex string to &lt;code&gt;test&lt;/code&gt; representing all files within those directories which we want to target.  In this case we'll look at all &lt;code&gt;.js&lt;/code&gt; files in the &lt;code&gt;.src&lt;/code&gt; folder, although you might want &lt;code&gt;.jsx&lt;/code&gt; depending on you project. Finally, we tell Webpack we want to use the &lt;code&gt;'babel'&lt;/code&gt; loader on those files.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var webpack = require('webpack');  
+var path = require('path');
+
+var dist = path.resolve(__dirname, 'dist');  
+var src = path.resolve(__dirname, 'src');
+
+var config = {  
+  entry: src + '/index.js',
+  output: {
+    path: dist,
+    filename: 'bundle.js'
+  },
+  module: {
+    loaders: [
+      {
+        test: /.js?/,
+        include: src,
+        loader: 'babel'
+      }
+    ]
+  }
+};
+
+module.exports = config;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In your project directory, open up a terminal and run:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;webpack -d --watch  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And watch the magic happen.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;--watch&lt;/code&gt; flag will run Webpack each time your files change.  &lt;/p&gt;
+
+&lt;p&gt;There is the barebones setup for working with React and ES6.  Using ES6 and JSX make working with React much more elegant, and with this simple tooling, it's quick to get off the ground.&lt;/p&gt;</content:encoded></item><item><title>Testing Socket.io With Mocha and Chai</title><description>&lt;p&gt;&lt;a href="http://socket.io/"&gt;Socket.io&lt;/a&gt; is awesome, but testing it can be a pain in the ass.  It requires a whole bunch of set up, some crucuial tear down.  When working with multiple client connections, which is pretty much the whole point of Socket.io, you'll need to listening to a cascading list&lt;/p&gt;</description><link>http://localhost:2368/testing-socket-io-with-mocha-and-chai/</link><guid isPermaLink="false">4f0130d4-b22e-462d-b283-9c4be3fe04af</guid><category>mocha</category><category>chai</category><category>testing</category><category>Socket.io</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 24 Feb 2016 19:25:06 GMT</pubDate><content:encoded>&lt;p&gt;&lt;a href="http://socket.io/"&gt;Socket.io&lt;/a&gt; is awesome, but testing it can be a pain in the ass.  It requires a whole bunch of set up, some crucuial tear down.  When working with multiple client connections, which is pretty much the whole point of Socket.io, you'll need to listening to a cascading list of 'connect' events just to make a simple test.  Throw in some &lt;code&gt;setTimeout&lt;/code&gt; to check if/how many times something was called, and you have a nasty looking test file.&lt;/p&gt;
+
+&lt;p&gt;To deal with all this, I put together &lt;code&gt;socket-tester&lt;/code&gt; that takes care of the client set up for you and throws in some helper functions mimicking some simple spy functions.  Check out the repo &lt;a href="https://github.com/alexzywiak/socketTester"&gt;here&lt;/a&gt;. Likewise, it's available on &lt;code&gt;npm&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install socket-tester  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this post, I'll outline the standard way to test Socket.io code using Mocha and Chai, and then how to do it using &lt;code&gt;socket-tester&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;The Problem&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I'll skip the Express server setup and jump right into the Socket.io relevant code.  Check out the &lt;a href="https://github.com/alexzywiak/socketTester"&gt;repo&lt;/a&gt; for the full code base.&lt;/p&gt;
+
+&lt;p&gt;The code we'll be testing is a brutally simple Socket.io setup.  It allows users to join rooms and send messages to other users in those rooms.  Groundbreaking, I know.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// socket/socket.config.js
+
+/*jslint node: true */
+'use strict';
+
+module.exports = function(io){
+
+  io.on('connection', function(socket){
+
+    socket.on('join room', function(roomname){
+      socket.roomname = roomname;
+      socket.join(roomname);
+    });
+
+    socket.on('message', function(msg){
+      io.to(socket.roomname).emit('message', msg);
+    });
+
+  });
+
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I'll go through how to set up three tests for some common use cases without using &lt;code&gt;socket-tester&lt;/code&gt;.  If you're interested in going a bit more in depth, &lt;a href="http://liamkaufman.com/blog/2012/01/28/testing-socketio-with-mocha-should-and-socketio-client/"&gt;this post&lt;/a&gt; really helped me get started.&lt;/p&gt;
+
+&lt;p&gt;To run the tests, make sure you have &lt;code&gt;mocha&lt;/code&gt; installed globally.  I'm going to use &lt;code&gt;chai&lt;/code&gt; as my assertion library and &lt;code&gt;socket.io-client&lt;/code&gt; to handle setting up my connections.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install mocha -g  
+npm install chai socket.io-client  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, create a &lt;code&gt;test&lt;/code&gt; directory and &lt;code&gt;test.js&lt;/code&gt; to hold onto all our tests.  Make sure to include a reference to your server file so it's up and running when you start your tests!  I required and saved the server file as &lt;code&gt;app&lt;/code&gt; here.&lt;/p&gt;
+
+&lt;p&gt;The basic setup:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// test/test.js
+
+var expect = require('chai').expect;  
+var io     = require('socket.io-client');
+
+var app = require('../testServer/index');
+
+var socketUrl = 'http://localhost:3000';
+
+var options = {  
+  transports: ['websocket'],
+  'force new connection': true
+};
+
+var room = 'lobby';
+
+describe('Sockets', function () {  
+  var client1, client2, client3;
+
+  // testing goodness goes here
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then while in the project directory run:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;mocha -R spec  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are four main steps in testing Socket.io code.  First, set up the connections using &lt;code&gt;socket.io-client&lt;/code&gt;.  Second, set up all even listeners.  Third, trigger all the emit events we need to look at.  And last, disconnect all the client connections.&lt;/p&gt;
+
+&lt;p&gt;There are of course a few gotchas that come with the territory.  When dealing with multiple clients, later connection events must be done inside of the &lt;code&gt;connection&lt;/code&gt; event callback of earlier connections.  Likewise, &lt;code&gt;emit&lt;/code&gt; events can only be reliably called when all clients are connected.  This can lead to some cascading listener callbacks when you begin testing multiple clients.&lt;/p&gt;
+
+&lt;p&gt;Here's a simple example testing the users can message each other.  Notice the actual test is held inside client1 &lt;code&gt;on 'message'&lt;/code&gt; listener.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// ... test.js
+
+it('should send and receive a message', function (done) {  
+    // Set up client1 connection
+    client1 = io.connect(socketUrl, options);
+
+    // Set up event listener.  This is the actual test we're running
+    client1.on('message', function(msg){
+      expect(msg).to.equal('test');
+
+      // Disconnect both client connections
+      client1.disconnect();
+      client2.disconnect();
+      done();
+    });
+
+    client1.on('connect', function(){
+      client1.emit('join room', room);
+
+      // Set up client2 connection
+      client2 = io.connect(socketUrl, options);
+
+      client2.on('connect', function(){
+
+        // Emit event when all clients are connected.
+        client2.emit('join room', room);
+        client2.emit('message', 'test');
+      });
+
+    });
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Not too bad, but a lot of setup and some finicky tear down.  This next test gets even hairier.  I want to test if users in other rooms will hear a message.  &lt;code&gt;client1&lt;/code&gt; and &lt;code&gt;client2&lt;/code&gt; will be in the same room, and &lt;code&gt;client3&lt;/code&gt; will be a different one.  So only &lt;code&gt;client2&lt;/code&gt; should hear &lt;code&gt;client1&lt;/code&gt; send message.  To track this, I'll use a counter variable to see how many times the event listeners for client2 and 3 were called. Because we're testing for a function that is never supposed to be called, we'll have to run our tests inside of a &lt;code&gt;setTimeout&lt;/code&gt; function to wait for all the &lt;code&gt;emit&lt;/code&gt; events to finish.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;it('should send and receive a message only to users in the same room', function (done) {  
+    client2CallCount = 0;
+    client3CallCount = 0;
+
+    client1 = io.connect(socketUrl, options);
+
+    client1.on('connect', function(){
+      client1.emit('join room', room);
+
+      client2 = io.connect(socketUrl, options);
+      client2.emit('join room', room);
+
+      client2.on('connect', function(){
+
+        client3 = io.connect(socketUrl, options);
+        client3.emit('join room', 'test');
+
+        client3.on('connect', function(){
+          client1.emit('message', 'test');
+        });
+
+        client3.on('message', function(){
+          client3CallCount++;
+        });
+      });
+
+      client2.on('message', function(){
+        client2CallCount++;
+      });
+    });
+
+    setTimeout(function(){
+      expect(client2CallCount).to.equal(1);
+      expect(client3CallCount).to.equal(0);
+      client1.disconnect();
+      client2.disconnect();
+      client3.disconnect();
+      done();
+    }, 25);
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This was about the point I got to when I thought there must be a better way.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Socket-Tester&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I put together &lt;code&gt;socket-tester&lt;/code&gt; to clean up a lot of the repeated code.  It will take care of all the set up and connection mumbly jumbly, as well as automatically cleaning up the connections for you.  It also adds in some nice helper functions to test common cases such as an event listener that shouldn't be called, or an event listener that should be called n times.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;socket-tester&lt;/code&gt; module exposes a constructor function which requires a &lt;code&gt;socket.io-client&lt;/code&gt; connection, &lt;code&gt;socketUrl&lt;/code&gt;, and &lt;code&gt;socketOptions&lt;/code&gt; parameters.  Here's the basic setup.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var expect = require('chai').expect;  
+var io     = require('socket.io-client');
+
+var app = require('../testServer/index');
+
+var SocketTester = require('../index');
+
+var socketUrl = 'http://localhost:3000';
+
+var options = {  
+  transports: ['websocket'],
+  'force new connection': true
+};
+
+var socketTester = new SocketTester(io, socketUrl, options);  
+var room = 'lobby';
+
+describe('Sockets', function () {
+
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The syntax is based around &lt;code&gt;socketTester.run()&lt;/code&gt; which takes two arguments.  An array of client objects, and Mocha's &lt;code&gt;done&lt;/code&gt; function.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;socketTester.run([client1, client2, client3], done);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A client object is setup as follows:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var client = {  
+  on: {
+     'event name': &amp;lt;event handler function&amp;gt;
+  },
+  emit: {
+     'event name': &amp;lt;event emit value&amp;gt;
+  }
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here are the same tests as above using &lt;code&gt;socket-tester&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// test.js
+it('should send and receive a message', function(done){  
+    var client1 = {
+      on: {
+        'message': socketTester.shouldBeCalledWith('test')
+      },
+      emit: {
+        'join room': room
+      }
+    };
+
+    var client2 = { 
+      emit: {
+        'join room': room,
+        'message': 'test'
+      }
+    };
+
+    socketTester.run([client1, client2], done);
+  });
+
+  it('should send and recieve a message only to users in the same room', function (done) {
+
+    var client1 = {
+      on: {
+        'message': socketTester.shouldBeCalledNTimes(1)
+      },
+      emit: {
+        'join room': room,
+      }
+    };
+
+    var client2 = {
+      emit: {
+        'join room': room,
+        'message': 'test'
+      }
+    };
+
+    var client3 = { 
+      on: {
+        'message': socketTester.shouldNotBeCalled()
+      },
+      emit: {
+        'join room': 'room'
+      }
+    };
+
+    socketTester.run([client1, client2, client3], done);
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I like this approach much better.  It has a flatter structure regardless of how many clients you want to test.  The helper functions also make it much easier to check the most common use cases for Socket.io.&lt;/p&gt;
+
+&lt;p&gt;For more info check out the &lt;a href="https://github.com/alexzywiak/socketTester"&gt;docs&lt;/a&gt;.  I'd love any feedback, let me know what you think!&lt;/p&gt;</content:encoded></item><item><title>Using JWTs with Express and Angular</title><description>&lt;p&gt;With the advent of Single Page Applications, server side authentication doesn't quite cut it anymore.  JSON Web Tokens are a handy way to bridge the gap.&lt;/p&gt;
+
+&lt;p&gt;At a high level overview, a JWT is an encoded bundle of JSON data, generally representing a user, signed and encoded by the server.&lt;/p&gt;</description><link>http://localhost:2368/using-jwts-with-bookshelf-and-angular/</link><guid isPermaLink="false">ce3d207d-697e-4f58-ae0b-92a9ed0bdfd6</guid><category>JWT</category><category>Authentication</category><category>AngularJS</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Thu, 18 Feb 2016 01:17:58 GMT</pubDate><content:encoded>&lt;p&gt;With the advent of Single Page Applications, server side authentication doesn't quite cut it anymore.  JSON Web Tokens are a handy way to bridge the gap.&lt;/p&gt;
+
+&lt;p&gt;At a high level overview, a JWT is an encoded bundle of JSON data, generally representing a user, signed and encoded by the server.  Each JWT is usually composed of three parts.  A header, a payload, and a signature.  The header contains relevant information regarding the encoding type as well as identifying the JSON as a web token.  The payload can be whatever JSON data you choose, generally user information.  The signature is built off a 'secret' key stored on the server.  The JWT holds onto this signature and it can be checked to make sure the JWT is the real deal.  All this is regular, old JSON, that is then encoded and sent down to the client.  Read more about JWTs &lt;a href="https://jwt.io/introduction/"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The general use case for JWTs is for user authentication.  On a successful login, the JWT is sent down from the server and is stored on the client.  Whenever the client wishes to take a restricted action on the server, the JWT is sent up with the request.  The JWT is verified on the server, and if everything passes, the client is allowed to take the requested action.&lt;/p&gt;
+
+&lt;p&gt;The beauty of the JWT is is accessible on the client, which makes it useful for SPAs.  The server only needs to be queried to get a new token or to take serve side actions. The client can block certain frontend routes be checking if a JWT is present or not.  In addition, the JWT is also encoded JSON, so its data can be referenced to grab user information without having to query the server again.&lt;/p&gt;
+
+&lt;p&gt;In this post, I'll walk through the relevant parts of a JWT implementation I put through on a recent project.  The full project made use of &lt;strong&gt;Angular&lt;/strong&gt; on the frontend, &lt;strong&gt;Express&lt;/strong&gt; as a server framework and &lt;strong&gt;Bookshelf&lt;/strong&gt; as my database ORM.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;JWTs on the Server&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I opted to put all the JWT logic into an &lt;code&gt;authController.js&lt;/code&gt; file and export it as a module.  I used the &lt;a href="https://github.com/auth0/node-jsonwebtoken"&gt;jsonwebtoken&lt;/a&gt; npm module for handling the nitty gritty as well as &lt;code&gt;lodash&lt;/code&gt; for some data manipulation.&lt;/p&gt;
+
+&lt;p&gt;Importing the secret is also a crucial part.  The secret is a string of my creation which is used to build the JWT's signature and is essential when encoding or decoding a token.  I hid my secret away in a nicely gitignored module to keep it private and then I export it wherever necessary throughout the server.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// authController.js
+
+var jwt = require('jsonwebtoken');  
+var _ = require('lodash');
+
+var secret = require('../config/auth.config').secret;
+
+module.exports = {  
+  authorize: function(req, res, next){
+    //...
+  },
+  createToken: function(user) {
+    //...
+  }
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are two functions being exposed in &lt;code&gt;authController.js&lt;/code&gt;.  The first, &lt;code&gt;createToken&lt;/code&gt; does just that.  Given a user object, in this case the user object is user data from the database, it will create and return a signed JWT token with an expiration.  Tokens are easily decoded, so never send sensitive information with them!  At minimum, omit the password.  More on JWT security later.  This token will be sent down to the client to be stored and attached to later requests.  Check out more about how to use the JWT module &lt;a href="https://github.com/auth0/node-jsonwebtoken"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  ...
+  createToken: function(user) {
+    return jwt.sign(_.omit(user.attributes, 'password'), secret, {
+      expiresIn: 24 * 60 * 60
+    });
+  }
+ ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;authenticate&lt;/code&gt; function is where the server side magic happens.  &lt;code&gt;authenticate&lt;/code&gt; acts as an Express middleware function and can be easily placed on any routes you need to restrict access to.&lt;/p&gt;
+
+&lt;p&gt;The function has two main jobs.  First, to check if a JWT exists on the &lt;code&gt;request&lt;/code&gt; object passing through the middleware, and second to verify against my app's secret that it has a valid signature.  If everything passes, the token is authentic, the &lt;code&gt;next()&lt;/code&gt; function is called, and the &lt;code&gt;request&lt;/code&gt; passes on to the next middleware.  If the JWT is not found or is invalid, an error response is sent to the client, and subsequent server actions are denied.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  ...
+  authorize: function(req, res, next) {
+    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+    if (token) {
+      jwt.verify(token, secret, function(err, decoded) {
+        if (err) {
+          console.error(err);
+          return res.status(403).send('error authorizing token');
+        } else {
+          req.token = decoded;
+          return next();
+        }
+      });
+    } else {
+      console.error('not authorized');
+      return res.sendStatus(403);
+    }
+  },
+  ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The next step, is to place the &lt;code&gt;authenticate&lt;/code&gt; middleware function on any restricted routes.  This will force any requests going through that route to pass authentication in order complete any actions.  Express' &lt;code&gt;.get&lt;/code&gt; and &lt;code&gt;.post&lt;/code&gt; convenience functions take any number of middleware callback functions as arguments, so we can just stick our &lt;code&gt;authenticate&lt;/code&gt; function as the first callback argument, and the actual action as the second callback function.&lt;/p&gt;
+
+&lt;p&gt;Here's an example from my &lt;code&gt;userRouter.js&lt;/code&gt; file.  It shows an unrestricted and restricted route.  I'll need to import my &lt;code&gt;auth&lt;/code&gt; module which we created above.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  var auth = require('../controllers/authController');
+  ...
+  // Get all users - Unrestricted Route
+  app.get('/', userController.getAllUsers);
+
+  // Get user by id - Restricted Route
+  app.get('/:id', auth.authorize, userController.getUserById);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Using the &lt;code&gt;jsonwebtoken&lt;/code&gt; npm module and setting up a some middleware and helper functions, it's very straightforward to get up and running with server side user authentication using JWTs.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;JWTs Client Side&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;JWTs can be used to restrict client side routes.  Keep in mind that this is not entirely fool proof as these tokens are accessible to anyone in local storage and easily decoded.  Make sure not to store sensitive information, especially passwords, in JWTs and to keep any really sensitive information and actions exclusively on the server.&lt;/p&gt;
+
+&lt;p&gt;That said, they are a very convenient way to have a user logged in and to restrict frontend routes the average user can visit.&lt;/p&gt;
+
+&lt;p&gt;I used Angular on the frontend of my project and saved all relevant authentication logic in an &lt;code&gt;Auth&lt;/code&gt; service.  &lt;/p&gt;
+
+&lt;p&gt;For brevity, I'll exclude the factory specific code. I wrote a number of helper functions, but they all revolve around saving the token to local storage, and checking if it exists to see if the user is logged in.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  // auth.js
+  ...
+  const storageKey = 'village.id_token';
+
+  /**
+   * Checks if a user has a token
+   * @return {[boolean]} [if user is authorized]
+   */
+  const authorized = () =&amp;gt; {
+    return !!getToken();
+  };
+
+  /**
+   * Returns raw jwt from local storage
+   * @return {[string]} [returns token or false if doesn't exist]
+   */
+  const getToken = () =&amp;gt; {
+    return $window.localStorage.getItem(storageKey) || false;
+  }
+
+  /**
+   * Save raw token to local storage.  Returns decoded token
+   * @param  {[string]} token [jwt to save]
+   * @return {[object]}       [decoded jwt]
+   */
+  const saveToken = (token) =&amp;gt; {
+    $window.localStorage.setItem(storageKey, token);
+    return decodeToken();
+  }
+
+  /**
+   * Deletes jwt from storage
+   * @return {[boolean]} [true]
+   */
+  const logOut = () =&amp;gt; {
+    $window.localStorage.removeItem(storageKey);
+    loggedInUser = null;
+    return true;
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With the token in storage, we can decode it and access the data it contains.  In this case, I was using it to hold on to user specific information.  To easily decode the tokens, I included &lt;a href="https://github.com/auth0/angular-jwt"&gt;angular-jwt&lt;/a&gt; and injected &lt;code&gt;jwtHelper&lt;/code&gt; as a dependency into my service. I wrote in a helper function to handle decoding the token stored in local storage.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  // auth.js
+  ...
+  /**
+   * Decodes raw jwt and returns payload
+   * @return {[object]} [returns decoded payload]
+   */
+  const decodeToken = () =&amp;gt; {
+    let token = getToken();
+    if (token) {
+      return jwtHelper.decodeToken(token);
+    } else {
+      return false;
+    }
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;By making use of these functions, it's easy to save a new token when a user logs in, to check if a user is already logged in, and get information about that user by decoding an existing token.&lt;/p&gt;
+
+&lt;p&gt;In order for the user to take actions on the server, this token must be sent up with any outgoing request.  This allows the server to securely verify if the user is logged in with a valid JWT and subsequently allowed to take restricted server side actions.  With jQuery and ajax, it's a matter of adding the token as a header.  For Angular, it's possible to automatically attach the token on any outgoing requests by making use of &lt;code&gt;$httpProvider.interceptors&lt;/code&gt;.  The 'interceptors' is an array of factories, or factory style callbacks, exposing function methods to be run on http requests and responses.  In this case, we're only interested in outgoing requests, so we'll only define a single method, &lt;code&gt;request&lt;/code&gt; on our factory.  This configuration is done on the main module declaration in my Angular app.&lt;/p&gt;
+
+&lt;p&gt;Check out more about &lt;code&gt;$httpProvider.interceptors&lt;/code&gt; &lt;a href="https://docs.angularjs.org/api/ng/service/$http#interceptors"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;...
+// Set up JWT authentication
+.config(['$httpProvider', function($httpProvider){
+
+    // Intercept outgoing http requests and attach jwt token
+    $httpProvider.interceptors.push('AttachJWT');
+}])
+
+.factory('AttachJWT', ['$window', function($window){
+
+    return {
+        // Attach jwt token if it exists
+        request: (object) =&amp;gt; {
+            let jwt = $window.localStorage.getItem('village.id_token');
+            if(jwt){
+                object.headers['x-access-token'] = jwt;
+            }
+            object.headers['Allow-Control-Allow-Origin'] = '*';
+            return object;
+        }
+
+    };
+}])
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It's also possible to restrict users that are not logged in from accessing certain Angular routes.  By listening on the &lt;code&gt;$rootScope&lt;/code&gt; for a &lt;code&gt;$stateChangeStart&lt;/code&gt; event with &lt;code&gt;ui-router&lt;/code&gt;, or &lt;code&gt;$routeChangeStart&lt;/code&gt; with &lt;code&gt;ng-router&lt;/code&gt;, you can interrupt any restricted route changes if the user is not logged in.  &lt;/p&gt;
+
+&lt;p&gt;This implementation will check if the target state has an &lt;code&gt;authenticate&lt;/code&gt; property set to true.  If so, it will check if there is a JWT present on the client.  If there is a JWT, the route change continues, if not, the user is redirected back to the 'sign in' state.&lt;/p&gt;
+
+&lt;p&gt;The listener is set up in Angular's &lt;a href="http://stackoverflow.com/questions/20663076/angularjs-app-run-documentation"&gt;run block&lt;/a&gt; right after declaring and configuring the main module.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  ...
+  .run(function($rootScope, $location, $state, Auth) {
+    $rootScope.$on('$stateChangeStart', function(evt, toState, toParams) {
+      if (toState &amp;amp;&amp;amp; toState.authenticate &amp;amp;&amp;amp; !Auth.authorized()) {
+        console.log('not logged in');
+        evt.preventDefault();
+        $state.go('signin');
+    }
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;authenticate&lt;/code&gt; property can be placed on the state when it is declared.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;  $stateProvider.state('dashboard', {
+      url: '/dashboard/',
+      params: {
+          userId: null
+      },
+      template: '&amp;lt;dashboard&amp;gt;&amp;lt;/dashboard&amp;gt;',
+      authenticate: true
+    });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are the essential elements in creating a user authentication system using JWTs.  JWTs are a very convenient method to authenticate users in a modern SPA, although they do have their drawbacks.  This is a simple implementation that only checks for the existence of a JWT on the client and a valid signature on the server.  You must take precautions when using JWTs as they still present a number of security risks.  Read more about potential issues &lt;a href="https://docs.angularjs.org/api/ng/service/$http#interceptors"&gt;here&lt;/a&gt;.  &lt;/p&gt;
+
+&lt;p&gt;Despite that, they are a very convenient way to hang on to user data and authorization without having to constantly query the server.&lt;/p&gt;</content:encoded></item><item><title>Using Bookshelf in ExpressJS</title><description>&lt;p&gt;Apparently there are those among us who are really into writing SQL statements.  Good for you guys.  As for the rest of us, there's &lt;a href="http://bookshelfjs.org/"&gt;Bookshelf&lt;/a&gt;.  A sweet ORM for NodeJS, Bookshelf can be a nice layer of abstraction to make our lives a lot easier when setting up a SQL&lt;/p&gt;</description><link>http://localhost:2368/using-bookshelf-in-expressjs/</link><guid isPermaLink="false">e265951b-fa68-44eb-83e8-042f7214452e</guid><category>Express</category><category>Bookshelf</category><category>MySQL</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 03 Feb 2016 19:34:43 GMT</pubDate><content:encoded>&lt;p&gt;Apparently there are those among us who are really into writing SQL statements.  Good for you guys.  As for the rest of us, there's &lt;a href="http://bookshelfjs.org/"&gt;Bookshelf&lt;/a&gt;.  A sweet ORM for NodeJS, Bookshelf can be a nice layer of abstraction to make our lives a lot easier when setting up a SQL database. But as with anything in code, it takes a little investment in time and research before you can reap those benefits.&lt;/p&gt;
+
+&lt;p&gt;I'm going to go through how to set up Bookshelf, connect it with an ExpressJS app, and how to set up a model.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Structuring The Application&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I won't go into how to set up an Express app and getting your server running, but the application architecture I'm going to use will look like this.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;├── index.js
+├── knexfile.js
+├── package.json
+└── server
+    ├── collections
+    │   └── users.js
+    ├── config
+    │   └── bookshelf.config.js
+    ├── controllers
+    │   └── userController.js
+    ├── models
+    │   └── user.js
+    ├── routes
+    │   └── userRouter.js
+    └── server.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In addition to Express and its dependencies, make sure and install &lt;code&gt;bookshelf&lt;/code&gt; and &lt;code&gt;knex&lt;/code&gt; and &lt;code&gt;mysql&lt;/code&gt; using &lt;code&gt;npm&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install --save knex bookshelf mysql  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Connecting Bookshelf&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The next step is to hook our app up to Bookshelf.  Bookshelf is based on the &lt;a href="http://knexjs.org/"&gt;Knex&lt;/a&gt; query builder.  We will need to first configure Knex as it is what will be managing the connection to our database.  Knex also allows us to run migrations to set up our tables and our schemas.  If you're interested in a walkthrough of how to run migrations in Knex, or if the next section makes no sense at all, check out my post here.&lt;/p&gt;
+
+&lt;p&gt;Otherwise, make sure you have a file containing the connection information for Knex to reference.  Mine is set up as &lt;code&gt;knexfile.js&lt;/code&gt; in the root directory and looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// knexfile.js
+var db = (process.env.NODE_ENV === 'test') ? 'bookshelf_test' : 'bookshelf'
+
+module.exports = {
+
+  client: 'mysql',
+  connection: {
+    host: '127.0.0.1',
+    user: 'root',
+    password: '',
+    database: db,
+    charset: 'utf8'
+  },
+  pool: {
+    min: 2,
+    max: 10
+  },
+  migrations: {
+    tableName: 'knex_migrations'
+  }
+
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I've set it up to use MySQL, but you can use which ever &lt;a href="http://knexjs.org/#Installation-client"&gt;SQL flavor you prefer&lt;/a&gt;. Likewise, make sure your database is set up with a &lt;code&gt;users&lt;/code&gt; table with the necessary columns.  Here is my schema written out with Knex.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;knex.schema.createTable('users', function(table){  
+      table.increments('id').primary();
+      table.string('email').notNullable();
+      table.string('password').notNullable();
+      table.string('name');
+    })
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once that is all put together, we'll create a file which will configure and initialize Bookshelf for us.  My file lives in the &lt;code&gt;server/config/bookshelf.config.js&lt;/code&gt; file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// bookshelf.config.js
+
+var knex = require('knex')(require('../../knexfile'));
+
+var Bookshelf = require('bookshelf')(knex);
+
+Bookshelf.plugin('registry');
+
+module.exports = Bookshelf;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The first line grabs Knex and feeds it our configuration file so it can set up a connection to the database.  Next, we initialize Bookshelf by passing in our knex instance.  I have opted to use the &lt;a href="https://github.com/tgriesser/bookshelf/wiki/Plugin:-Model-Registry"&gt;registry plugin for Bookshelf&lt;/a&gt;  to make it easier to prevent model dependency issues.  Then, we export the whole thing.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Creating a User Model&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Models are the heart and soul of Bookshelf.  They give a convenient Object Oriented interface to allow you to manage the contents of your database.  They also make it much easier to manage the various relationship types in MySQL; many to many etc.  I'm going to save all the foreign key fun for another post.  Here, I'll create a simple model without any external relationships.&lt;/p&gt;
+
+&lt;p&gt;In our models directory, we'll create a file called &lt;code&gt;user.js&lt;/code&gt; to hold on to our user model.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// user.js
+
+var Bookshelf = require('../config/bookshelf.config');
+
+var User = Bookshelf.Model.extend({
+
+  tableName: 'users'
+
+});
+
+module.exports = db.model('User', User);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;First, we import the &lt;code&gt;Bookshelf&lt;/code&gt; instance we set up earlier through our &lt;code&gt;bookshelf.config.js&lt;/code&gt; file.  &lt;/p&gt;
+
+&lt;p&gt;As bookshelf's syntax is based on backbonejs, we extend the bookshelf model and, at minimum, tell bookshelf which database table to save the information on.&lt;/p&gt;
+
+&lt;p&gt;Finally, we export our model.  The specific syntax here is based on the registry plugin (which we set up in the &lt;code&gt;bookshelf.config.js&lt;/code&gt; file).  As our models get more complex, through adding in many to many relationships and so on, we will need to include references to external models when we create each model.  Registry makes it cleaner to include outside models and gets rid of circular dependency issues.  Not an issue now, but a huge help as our data gets more complex.&lt;/p&gt;
+
+&lt;p&gt;This is the basic form for our model.  To use it, just &lt;code&gt;require&lt;/code&gt; it inside your express app, and you have access to all the &lt;a href="http://bookshelfjs.org/#Model"&gt;model goodness&lt;/a&gt; that comes with Bookshelf.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Testing Our Model&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Testing.  It's like eating kale or exercising.  Something you know you should be doing, but would rather do later.  Likewise, a little investment now, will make you feel way better in the future.&lt;/p&gt;
+
+&lt;p&gt;Let's write out some tests to make sure our models work. I like using &lt;code&gt;mocha&lt;/code&gt; as a test framework and &lt;code&gt;chai&lt;/code&gt; as my assertion library.  Make sure and install them as dev dependencies.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install --save-dev mocha chai  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then in &lt;code&gt;package.json&lt;/code&gt; add the following script so we can easily run &lt;code&gt;npm test&lt;/code&gt;.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;"scripts": {
+    "test": "./node_modules/.bin/mocha"
+  },
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, let's add a &lt;code&gt;test&lt;/code&gt; directory in our root directory and add in a file called &lt;code&gt;userModel.spec.js&lt;/code&gt;.  Mocha will look for a &lt;code&gt;test&lt;/code&gt; directory by default and try and run *.js files inside of it.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// userModel.spec.js
+
+process.env.NODE_ENV = 'test';
+
+var expect = require('chai').expect;  
+var knex = require('knex')(require('../knexfile'));
+
+var User = require('../server/models/user');
+
+describe('User Route', function() {  
+// Testing goodness goes here
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To ensure that I'm working with a clean database, and to clean it out for subsequent tests, I'm going to use knex migrations.  While not necessary, it makes it a lot easier to setup and teardown the testing database while working on it.  Again check out my post here for more on migrations.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;beforeEach&lt;/code&gt; will clear out the database using &lt;code&gt;knex.migrate.rollback&lt;/code&gt;, then reapply our table schemas using &lt;code&gt;knex.migrate.latest&lt;/code&gt;.  Finally, we'll make sure and clear out the database by using &lt;code&gt;rollback&lt;/code&gt; again in our &lt;code&gt;after&lt;/code&gt; function.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;// userModel.spec.js
+...
+describe('User Route', function() {  
+  beforeEach(function(done) {
+    return knex.migrate.rollback()
+      .then(function() {
+        return knex.migrate.latest()
+      })
+      .then(function() {
+        done();
+      });
+  });
+
+  after(function (done) {
+    return knex.migrate.rollback()
+      .then(function(){
+        done();
+      });
+  });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Our model is pretty simple at this point, so I'll just write two tests.  One as a sanity check to make sure that the model is working correctly and we have an empty database and the second to make sure we can save a model and then access it on the database.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javscript"&gt;    it('should not have any models', function (done) {
+      User.forge().fetch().then(function(results){
+        expect(results).to.equal(null);
+        done()
+      });
+    });
+
+    it('should save a model to the database', function (done) {
+      var user = new User({
+        email: 'test@test.com',
+        password: 'defconbravo',
+        name: 'Yossarian'
+      }).save()
+      .then(function(){
+        return User.where({email: 'test@test.com'}).fetch();
+      })
+      .then(function(user){
+        expect(user.get('name')).to.equal('Yossarian');
+        done();
+      });
+    });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the terminal run &lt;code&gt;npm test&lt;/code&gt; and, hopefully, everything should be happily running along.&lt;/p&gt;
+
+&lt;p&gt;There is a basic example of how to set up a bookshelf model and test it out.  In a later post, I hope to go through how to model more complex relationships using Bookshelf.&lt;/p&gt;</content:encoded></item><item><title>Running Migrations with Knex</title><description>&lt;p&gt;Knex can take a lot of the grunt work out of working with SQL databases in NodeJS.  On example is using Knex' migration functionality to set up and modify your table setup.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set up a knexfile&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;First step to getting started is to globally install knex.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install -g knex&lt;/code&gt;&lt;/pre&gt;</description><link>http://localhost:2368/running-migrations-with-knex/</link><guid isPermaLink="false">85ba9569-0777-4873-962b-c8392b4ff17c</guid><category>Bookshelf</category><category>MySQL</category><category>Knex</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 03 Feb 2016 02:41:44 GMT</pubDate><content:encoded>&lt;p&gt;Knex can take a lot of the grunt work out of working with SQL databases in NodeJS.  On example is using Knex' migration functionality to set up and modify your table setup.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set up a knexfile&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;First step to getting started is to globally install knex.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install -g knex  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next inside your root directory, run:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knex init  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will set up a &lt;code&gt;knexfile.js&lt;/code&gt; which will hang on to the configuration information for setting up your SQL db.  In this case, I'm going to wire it up to use MySQL.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// Update with your config settings.
+
+module.exports = {
+
+  development: {
+    client: 'mysql',
+    connection: {
+      host: '127.0.0.1',
+      user: 'root',
+      password: '',
+      database: '&amp;lt;YOUR TEST DB NAME&amp;gt;',
+      charset: 'utf8'
+    }
+  },
+
+  staging: {
+    ...
+  },
+
+  production: {
+    ...
+  }
+
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the &lt;code&gt;knexfile&lt;/code&gt; you have the option of altering your configurations depending on your environment.  When running your migrations, you have the option of passing a &lt;code&gt;--env&lt;/code&gt; flag in command line to specify which environment you want to use. ie:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knex migrate:latest --env production  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For this example, I'll just write in an example using a local MySQL database.  The default &lt;code&gt;knexfile&lt;/code&gt; is a good reference, and you can check out more about configuring the connection in the &lt;a href="http://knexjs.org/#Installation-client"&gt;Knex docs&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Creating a Migration&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;After setting up your &lt;code&gt;knexfile.js&lt;/code&gt; to incorporate your preferred SQL flavor, pop open your terminal and point it to your project's root directory.&lt;/p&gt;
+
+&lt;p&gt;In there, run:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knex migrate:make setup  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will create a &lt;code&gt;migrations&lt;/code&gt; directory and place a a migration file inside of it.&lt;/p&gt;
+
+&lt;p&gt;Open up that file and add something like the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;exports.up = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.createTable('users', function(table){
+      table.string('username');
+      table.string('password');
+      table.timestamps();
+    })
+  ])
+};
+
+exports.down = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.dropTable('users');
+  ])
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Each migration is expecting two functions on its API, &lt;code&gt;up&lt;/code&gt; and &lt;code&gt;down&lt;/code&gt;.  &lt;code&gt;up&lt;/code&gt; is called when the migration is applied, and &lt;code&gt;down&lt;/code&gt; is called on a migration rollback.&lt;/p&gt;
+
+&lt;p&gt;In those functions you can use any of &lt;a href="http://knexjs.org/#Schema"&gt;Knex' Schema Functions&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To make it easier to run rollbacks, your &lt;code&gt;down&lt;/code&gt; function should 'undo' your &lt;code&gt;up&lt;/code&gt; function.  In this case, because we are creating a table in &lt;code&gt;up&lt;/code&gt;, we need to remove that table in &lt;code&gt;down&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;To apply your new migration, in the terminal, run:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knex migrate:latest  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Updated Your Tables&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To make a change to your tables, create another migration.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knex migrate:make step1  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the new migration file, you can make changes to your table, again making use of any of Knex' schema functions.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;exports.up = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.table('users', function(table){
+      table.string('twitter');
+    })
+  ])
+};
+
+exports.down = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.table('users', function(table){
+      table.dropColumn('twitter');
+    })
+  ])
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here because we add a new column in &lt;code&gt;up&lt;/code&gt;, we'll remove it in &lt;code&gt;down&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Rollback&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To remove the changes we've made so far, in the terminal run:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;knex migrate:rollback  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the migrations you've made will be rolled back.&lt;/p&gt;
+
+&lt;p&gt;Using Knex' migrate functionality, creating and modifying your table schemas is a lot easier.  So unless you really dig writing out longhand SQL statements, Knex will make your life a lot easier.  &lt;/p&gt;</content:encoded></item><item><title>Finding All Permutations of a String in Python</title><description>&lt;p&gt;In my quest to learn the intricacies of Python, I came across one of my favorite algorithms; finding all the possible permutations of a string.&lt;/p&gt;
+
+&lt;p&gt;To lay it out:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;# Given string 'ab'
+# Permutation list ['a', 'ab', 'b', 'ba']
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is a poster child for recursion.  To set it up, we'll&lt;/p&gt;</description><link>http://localhost:2368/finding-all-permutations-of-a-string-in-python/</link><guid isPermaLink="false">2602c66b-1b52-4ae4-89de-96d4416aa066</guid><category>Python</category><category>Algorithms</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Mon, 01 Feb 2016 21:42:19 GMT</pubDate><content:encoded>&lt;p&gt;In my quest to learn the intricacies of Python, I came across one of my favorite algorithms; finding all the possible permutations of a string.&lt;/p&gt;
+
+&lt;p&gt;To lay it out:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;# Given string 'ab'
+# Permutation list ['a', 'ab', 'b', 'ba']
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is a poster child for recursion.  To set it up, we'll have our primary function, &lt;code&gt;string_permutations&lt;/code&gt;, but also define a &lt;code&gt;subroutine&lt;/code&gt; that will do our recursive dirt work.  We'll also create a &lt;code&gt;combos&lt;/code&gt; list to hold onto our permutations.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;#!/usr/bin/env python -tt
+
+def string_permutations(string):
+
+  def sub_routine(...some args):
+    combos = []
+    return combos
+
+  return sub_routine(...some args)
+
+def main():  
+  # print string_permutations('ab')
+
+if __name__ == "__main__":  
+  main()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We'll pass in two list arguments to &lt;code&gt;sub_routine&lt;/code&gt;.  The first will hold on to all the characters that we have 'used' so far, and the other will hold on to the characters that we still have left to use.  We can call &lt;code&gt;sub_routine&lt;/code&gt; in our parent function beginning with an empty list for 'used' characters, and a list made of all characters in the target string as the initial 'left' characters.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;...
+def sub_routine(used, left):  
+  combos = []
+  return combos
+
+return sub_routine([], list(string))  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Inside our &lt;code&gt;sub_routine&lt;/code&gt; function, we can begin generating our permutations. First, we'll loop through each index in the &lt;code&gt;left&lt;/code&gt; list.  Looping the index and not the character itself, will make it easier to manage the recursion later on.  Then, we'll remove the character from the &lt;code&gt;left&lt;/code&gt; list at that index and add it to the end of the &lt;code&gt;used&lt;/code&gt; list.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;used&lt;/code&gt; list will represent our permutation so far.  We're not implementing restrictions on the size of the permutations, so each iteration will represent a unique permutation.  We can then push that permutation to our &lt;code&gt;combos&lt;/code&gt; list.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;...
+def sub_routine(used, left):  
+  combos = []
+
+  for i in range(0, len(left)):
+    ch = left.pop(i)
+    used.append(ch)
+
+    combos.append(''.join(used))
+
+
+  return combos
+
+return sub_routine([], list(string))  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And now, here comes the fun part.  For each permutation we start building, we need to add on all combinations of remaining characters.  So let's get a little recursive.&lt;/p&gt;
+
+&lt;p&gt;What we'll do is pass in the new &lt;code&gt;used&lt;/code&gt; and &lt;code&gt;left&lt;/code&gt; lists to a recursive call to our &lt;code&gt;sub_routine&lt;/code&gt;.  Since our &lt;code&gt;sub_routine&lt;/code&gt; will return all of its subsequent permutations, we can concatenate the result of our recursive call with our &lt;code&gt;combos&lt;/code&gt; array.&lt;/p&gt;
+
+&lt;p&gt;The tricky part comes in after we make the recursive call.  We have to reset the contents of left and used so that when we continue on in the for loop, we can access the next character properly.&lt;/p&gt;
+
+&lt;p&gt;For example, on the first iteration of 'ab':  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;# First iteration: 
+# ch will equal 'a'
+# We will put 'a' into our used array as the first character.
+# All subsequent recursive calls down this path will have 'a' as the first character.
+# We finish the recursive chain, and replace 'a' in left and remove 'a' from used.
+
+
+#Second Iteration:
+# ch will equal 'b'
+# We will put 'b' into our used array as the first character.
+# All subsequent recursive calls down this path will have 'b' as the first character.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All of these steps will be repeated as part of the recursion with the result that each permutation will be visited.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-python"&gt;#!/usr/bin/env python -tt
+
+def string_permutations(string):
+
+  def sub_routine(used, left):
+
+    combos = []
+
+    for i in range(0, len(left)):
+      ch = left.pop(i)
+      used.append(ch)
+
+      combos.append(''.join(used))
+
+      # Append the results of the 
+      # recursive call to our combos list
+      combos = combos + sub_routine(used, left)
+
+
+      # Remove ch from used
+      used.pop(-1)
+      # Splice ch back into left at its original index
+      left[i:0] = [ch]
+
+    return combos
+
+  return sub_routine([], list(string))
+
+def main():  
+  print string_permutations('ab')
+
+if __name__ == "__main__":  
+  main()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Knocking out a permutations algorithm always makes me feel like a recursive badass.&lt;/p&gt;</content:encoded></item><item><title>Streaming Files from S3 Using AWS Cloudfront</title><description>&lt;p&gt;For a recent project I was working on, we needed to host a bunch of audio files for our web app and make them streamable to the client.  My original implementation made use of Nodejs streams to stream content hosted on S3 down to the client.  Check out that implementation&lt;/p&gt;</description><link>http://localhost:2368/streaming-files-from-s3-using-aws-cloudfront/</link><guid isPermaLink="false">93e58cd9-3a03-486c-8b74-607695e4b098</guid><category>AWS</category><category>Cloudfront</category><category>S3</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 27 Jan 2016 22:25:15 GMT</pubDate><content:encoded>&lt;p&gt;For a recent project I was working on, we needed to host a bunch of audio files for our web app and make them streamable to the client.  My original implementation made use of Nodejs streams to stream content hosted on S3 down to the client.  Check out that implementation &lt;a href="http://alexzywiak.github.io/streaming-audio-goodness-from-amazon-s3-to-the-clients-ears/"&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;And then totally disregard that.  Very soon afterward, I discovered AWS Cloudfront which offers a much better way to host and stream files.  Cloudfront lets you associate a distribution with an existing S3 bucket and make select files streamable or generally available.&lt;/p&gt;
+
+&lt;p&gt;I'll briefly go through here how to start make S3 hosted audio files available for streaming on a client.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Link to S3&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Assuming you have a bucket up and running on S3 with some files you want to make available, head on over to the &lt;a href="https://console.aws.amazon.com/cloudfront/home"&gt;Cloudfront Dashboard&lt;/a&gt;.  &lt;/p&gt;
+
+&lt;p&gt;Click &lt;code&gt;Create Distribution&lt;/code&gt; &lt;br&gt;
+Then choose &lt;code&gt;Web&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;On the next screen set the &lt;code&gt;Origin Domain Name&lt;/code&gt; to the bucket you want to set up the distribution for.  Optionally, add in an &lt;code&gt;Origin Path&lt;/code&gt; to specify a folder in the bucket to use as the default origin.&lt;/p&gt;
+
+&lt;p&gt;Click &lt;code&gt;Create Disrtibution&lt;/code&gt; down at the bottom, and it will get up and running.&lt;/p&gt;
+
+&lt;p&gt;Back in your dashboard, you should see the new distribution along with some information about it.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Setting Up Permissions on your Bucket&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;to make the files available for streaming, you have to make them 'public' in your bucket.  There are a few ways to do this depending on what you're hosting.&lt;/p&gt;
+
+&lt;p&gt;1)  You can simply right click on any files in your bucket and choose &lt;code&gt;Make Public&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;2)  You can right click on a folder and choose &lt;code&gt;Make Public&lt;/code&gt;.  This will grant access to all files currently in the folder, but new files added into the folder will not be made public by default.&lt;/p&gt;
+
+&lt;p&gt;3)  Probably your best bet, is to set up a bucket policy.  These set up global permission defaults for your bucket and give you a lot of fine grained control over what you want to share, and with whom.  &lt;/p&gt;
+
+&lt;p&gt;To edit a bucket policy, right click your bucket and choose &lt;code&gt;Properties&lt;/code&gt;. &lt;br&gt;
+Click &lt;code&gt;Permissions&lt;/code&gt; --&gt; &lt;code&gt;Add bucket policy&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Here are some &lt;a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html"&gt;example bucket policies&lt;/a&gt; from Amazon/  Copy, paste, modify, and save as your new bucket policy.  &lt;/p&gt;
+
+&lt;p&gt;Here's a basic boilerplate to allow users to stream files from your bucket.  It will let users get access to any &lt;code&gt;.wav&lt;/code&gt; files in your &lt;code&gt;public&lt;/code&gt; folder in the specified bucket.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  "Version":"2012-10-17",
+  "Statement":[
+    {
+      "Sid":"AddPerm",
+      "Effect":"Allow",
+      "Principal": "*",
+      "Action":["s3:GetObject"],
+      "Resource":["arn:aws:s3:::examplebucket/public/*.wav"]
+    }
+  ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Accessing Files on the Client&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Once your new Cloudfront distribution is in an Enabled state and you have updated your bucket permissions, you can access your files through the client.&lt;/p&gt;
+
+&lt;p&gt;Back in the Cloudfront dashboard, grab the &lt;code&gt;Domain Name&lt;/code&gt; for your distribution, then append the S3 folder path and filename of a file to stream.  &lt;/p&gt;
+
+&lt;p&gt;For example, to get at &lt;code&gt;test.wav&lt;/code&gt; in the &lt;code&gt;public&lt;/code&gt; folder:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt; what ever cloud front string &amp;gt;.cloudfront.net/public/test.wav  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Put that into your browser and you should be able to stream your file.&lt;/p&gt;
+
+&lt;p&gt;Like wise, to make it available on an html page add it as the source to an audio tag, and you're good to go!&lt;/p&gt;</content:encoded></item><item><title>Managing Multiple Child Processes in NodeJS</title><description>&lt;p&gt;In a recent project, I needed to run some audio processing functions on a serious amount of audio files.  As we were running on a small time server, this was a little too taxing for our intro level RAM allotments.  So I looked into outsourcing the heavy lifting into separate&lt;/p&gt;</description><link>http://localhost:2368/managing-multiple-child-processes-in-nodejs/</link><guid isPermaLink="false">baa6d50d-062b-4969-8363-24c400992b6b</guid><category>NodeJS</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 20 Jan 2016 23:02:38 GMT</pubDate><content:encoded>&lt;p&gt;In a recent project, I needed to run some audio processing functions on a serious amount of audio files.  As we were running on a small time server, this was a little too taxing for our intro level RAM allotments.  So I looked into outsourcing the heavy lifting into separate child processes and then limiting the total concurrent number of processes running at any given time.&lt;/p&gt;
+
+&lt;p&gt;In this post, I'm going to go through the steps I came up with.  First, how to create a child process in a separate file and run it using the &lt;code&gt;spawn&lt;/code&gt; method.  Next, how to promisify the process and pass arguments to it.  Lastly, how to queue up a whole bunch of those processes and limiting the total number that will be run concurrently.&lt;/p&gt;
+
+&lt;p&gt;If you're just here for some sweet code, &lt;a href="https://github.com/alexzywiak/nodejs-childprocesses-bluebird"&gt;here's&lt;/a&gt; the repo with the example code.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Outsourcing a Child Process&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The only npm dependency we'll need is &lt;code&gt;bluebird&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm init  
+npm install --save bluebird  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Our driver file will be in &lt;code&gt;index.js&lt;/code&gt; and we'll put our child process login in &lt;code&gt;process.js&lt;/code&gt;. &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;├── index.js
+├── node_modules
+├── package.json
+└── process.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We'll use a trivial example for our child process logic.  It will run a &lt;code&gt;setTimeout&lt;/code&gt; function to simulate a delay.  It will send data to the parent process using &lt;a href="https://nodejs.org/api/process.html#process_process_stdout"&gt;process.stdout&lt;/a&gt;.  It will send some trivial data when it is initiated and again after two seconds when it is completed.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// process.js
+
+    process.stdout.write('Process beginning.');
+
+    setTimeout(function(){
+        process.stdout.write('Process complete.');
+    }, 2000);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Our &lt;code&gt;index.js&lt;/code&gt; file will use the &lt;a href="https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options"&gt;spawn&lt;/a&gt; function from Node's &lt;code&gt;child_process&lt;/code&gt; module to call &lt;code&gt;process.js&lt;/code&gt;.  Spawn needs to be passed in two parameters to run and external file.  The first is the command to run the file, in this case &lt;code&gt;node&lt;/code&gt;, and the second is an array of arguments, the first of which, will be the file path of the file we would like to run, in this case &lt;code&gt;'./process.js'&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Our child process is sending data through the &lt;code&gt;process.stdout.write()&lt;/code&gt; function, but we need to set up listeners in the parent process to get access to that data and simply write it to the console.  The data that comes back is in the form of a &lt;code&gt;buffer&lt;/code&gt; so we'll have to call buffer's &lt;code&gt;.toString&lt;/code&gt; method on it to convert into something comprehensible. &lt;/p&gt;
+
+&lt;p&gt;We'll set up listeners for three events on the child, a data event from &lt;code&gt;process.stdout&lt;/code&gt;, data in the case of an error from &lt;code&gt;process.stderr&lt;/code&gt; and finally, we'll listen for the &lt;code&gt;exit&lt;/code&gt; event on &lt;code&gt;process&lt;/code&gt;.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;// index.js
+var spawn = require('child_process').spawn;  
+var bbPromise = require('bluebird');
+
+function loadProcess() {
+
+  var process = spawn('node', ['./process.js']);
+
+  process.stdout.on('data', function(data) {
+    console.log(data.toString());
+  });
+
+  process.stderr.on('data', function(err) {
+    reject(err.toString());
+  });
+
+  process.on('exit', function() {
+    console.log('Done!');
+  });
+
+}
+
+loadProcess();  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Runnning:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;node index.js  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Will get us:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Process  beginning.  
+Process complete.  
+Done!  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Running Multiple Instances with Arguments&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;While our previous example is truly fascinating, let's pass some arguments to our child process and use promises so we can queue up a whole bunch.&lt;/p&gt;
+
+&lt;p&gt;First we'll modify our index.js file to pass in arguments to our child processes.  The second parameter to &lt;code&gt;spawn&lt;/code&gt; is an array that accepts any number of elements and makes them available to the child process via &lt;code&gt;process.argv&lt;/code&gt; array.  Our &lt;code&gt;loadProcess&lt;/code&gt; function will take in a parameter, &lt;code&gt;arg&lt;/code&gt;, and will pass it to the child process via the spawn function as the second element in the arguments array.&lt;/p&gt;
+
+&lt;p&gt;We'll also wrap the event listeners in a bluebird promise, and resolve the promise when the process is complete.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;//index.js
+ function loadProcess(arg) {
+
+    return new bbPromise(function(resolve, reject) {
+      var process = spawn('node', ['./process.js', arg]);
+
+      process.stdout.on('data', function(data) {
+        console.log(data.toString());
+      });
+
+      process.stderr.on('data', function(err) {
+        reject(err.toString());
+      });
+
+      process.on('exit', function() {
+        resolve();
+      });
+    });
+  }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We'll make a slight modification to &lt;code&gt;process.js&lt;/code&gt; so we can get access to the passed &lt;code&gt;arg&lt;/code&gt; value.  All arguments passed into spawn will be available in the child process in the &lt;code&gt;process.argv&lt;/code&gt; property.  This property is an array, and the first two elements will be the &lt;code&gt;'node'&lt;/code&gt; command and the filepath respectively, so our value will be happily residing at &lt;code&gt;process.argv[2]&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;//process.js
+var value = process.argv[2];
+
+    process.stdout.write('Process ' + value + ' beginning.');
+
+    setTimeout(function(){
+        process.stdout.write('Process ' + value + ' complete.');
+    }, 2000);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, to make use of our promises, we'll queue up a whole bunch of the child process using different arguments.  Then, using &lt;a href="http://bluebirdjs.com/docs/api/map.html"&gt;bluebird's map&lt;/a&gt; function, we'll execute each process, and execute a function when they have all resolved.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// index.js
+...
+  var commands = [1, 2, 3, 4, 5].map(function(value) {
+    return loadProcess.bind(null, value);
+  });
+
+  return bbPromise.map(commands, function(command) {
+    return command();
+  })
+  .then(function() {
+    console.log('Child Processes Completed');
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We create our commands array to be composed of function references to &lt;code&gt;loadProcess&lt;/code&gt; bound to different argument values, in this case the numbers one through five.&lt;/p&gt;
+
+&lt;p&gt;Then, bluebird's map function will iterate over each command, which are each promises remember, and execute that command. Then, it will console.log when they have all completed.&lt;/p&gt;
+
+&lt;p&gt;Running  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;node index.js  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Should get you something along the lines of  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Process 4 beginning.  
+Process 2 beginning.  
+Process 5 beginning.  
+Process 1 beginning.  
+Process 3 beginning.  
+Process 4 complete.  
+Process 2 complete.  
+Process 5 complete.  
+Process 1 complete.  
+Process 3 complete.  
+Child Processes Completed  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Limiting the Number of Concurrent Processes&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Up above, it's a bit of the wild west out there.  Processes are flying in any order and all running at the same time.  What if we needed to run them serially?  Or what if we needed to limit the total number going at one time?&lt;/p&gt;
+
+&lt;p&gt;Bluebird's map function, simply enough, accepts a concurrency argument which will limit the total number of unresolved promises it will have running at any given time.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;//index.js 
+...
+  return bbPromise.map(commands, function(command) {
+    return command();
+  }, {
+    concurrency: 1
+  })
+  .then(function() {
+    console.log('Child Processes Completed');
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With a concurrency of one, running index.js will execute each process in order, and will only start after the previous has resolved.  Increasing the concurrency value, will start running that number of processes at the same time.  Try it out!&lt;/p&gt;</content:encoded></item><item><title>Spinning up a NodeJS Server from Scratch on Digital Ocean</title><description>&lt;p&gt;Digital Ocean takes a little more set up than Heroku, but once you get it going, it is blissfully easy to use.  DO gives you access to a CLI on your server's file system where you can npm, grunt, and node to your heart's content.  It's a refreshingly transparent system&lt;/p&gt;</description><link>http://localhost:2368/spinning-up-a-nodejs-server-from-scratch-on-digital-ocean/</link><guid isPermaLink="false">62334f29-188f-45a6-944d-79ccac7c2737</guid><category>NodeJS</category><category>DigitalOcean</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Fri, 08 Jan 2016 00:20:09 GMT</pubDate><content:encoded>&lt;p&gt;Digital Ocean takes a little more set up than Heroku, but once you get it going, it is blissfully easy to use.  DO gives you access to a CLI on your server's file system where you can npm, grunt, and node to your heart's content.  It's a refreshingly transparent system after the rather opaque world of Heroku's Dyno's and build packs.&lt;/p&gt;
+
+&lt;p&gt;What I'll walk through here is setting up a Digital Ocean droplet, their clever euphemism for a server instance.  Once we have our droplet set up, we'll install the necessary NodeJS packages, install Git, and clone over a repository.  Once we have that going, we'll briefly go through how to set up your DNS to point to your droplet and how to get the server to respond appropriately to traffic.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set Up a Droplet&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;First up, head on over to &lt;a href="https://www.digitalocean.com/"&gt;Digital Ocean&lt;/a&gt; and sign yourself up.&lt;/p&gt;
+
+&lt;p&gt;Before you hit that enticing little 'Create Droplet' button, let's set up an SSH key to make our lives easier.  An SSH key will allow you to directly access your droplet's file system from your terminal.  After logging in, navigate to &lt;a href="https://cloud.digitalocean.com/settings/security"&gt;Settings &gt; User &gt; Security&lt;/a&gt; and click 'Add SSH Key'.  &lt;/p&gt;
+
+&lt;p&gt;For more detailed instructions, follow Digital Ocean's own excellent tutorial on SSH keys &lt;a href="https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets"&gt;here&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Alternatively, TL;DR:&lt;/p&gt;
+
+&lt;p&gt;In your terminal:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;ssh-keygen -t rsa  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Save the file.  Passphrase optional. Then type out:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; cat ~/.ssh/id_rsa.pub
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will print out the public SSH key, which you can then paste into the text area in the Security page.  Give the key a name, and save it.&lt;/p&gt;
+
+&lt;p&gt;At this point, go ahead and hit 'Create a Droplet'.  Get it to run on Ubuntu, the default, and choose your size and location.  Make sure to &lt;strong&gt;add the SSH key you just created&lt;/strong&gt; in the 'Add Your SSH Keys' section!&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set up Your Environment&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The droplet is up a running at this point, let's get it to do its job.  In the droplet menu, copy the IP address of your new droplet.  Then open up your terminal, and type the following.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;ssh root@YOUR DROPLET IP  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Tell it 'yes', and you're in!&lt;/p&gt;
+
+&lt;p&gt;To start setting up the server environment, we'll use &lt;a href="https://www.digitalocean.com/community/tutorials/how-to-manage-packages-in-ubuntu-and-debian-with-apt-get-apt-cache"&gt;apt-get&lt;/a&gt; as a package manager.&lt;/p&gt;
+
+&lt;p&gt;First off run:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;apt-get update  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then install some essentials:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;apt-get install nodejs npm git  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then it's as simple as running &lt;code&gt;git clone &amp;lt;your repo URL of choice&amp;gt;&lt;/code&gt; in your droplet.  Once in there, an &lt;code&gt;npm install&lt;/code&gt; will get all your packages going.  If you need grunt or gulp, just install their cli tools through npm and build away.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Setting up an App Server&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This is a summation of this excellent &lt;a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-14-04"&gt;Digital Ocean Tutorial&lt;/a&gt;. &lt;/p&gt;
+
+&lt;p&gt;To run the node server on the droplet, we'll use PM2 as a process manager.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;apt-get install pm2  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;pm2 will be responsible for handling our &lt;strong&gt;app server&lt;/strong&gt; on our droplet. Run pm2 start to get things going.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;pm2 start &amp;lt;server file&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;At this point, if you visit your droplet's IP:&amp;lt; port #&gt; in your browser, you should see your app up and running.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Setting Up a Web Server&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Again, referencing &lt;a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-14-04"&gt;Digital Ocean Tutorial&lt;/a&gt;. &lt;/p&gt;
+
+&lt;p&gt;Digital Ocean recommends setting up a Reverse Proxy with &lt;a href="https://www.nginx.com/"&gt;nginx&lt;/a&gt; as a &lt;strong&gt;web server&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Essentially, nginx will tell any incoming requests to our DNS which IP to go look at.  First, we'll install it using &lt;code&gt;apt-get&lt;/code&gt;, and then will set up a config file to route incoming requests to the proper IP.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;apt-get install nginx  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then to get at the config file we need:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;vi /etc/nginx/sites-available/default  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And then, as per the Digital Ocean tutorial, replace the contents of that file with the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; {
+    listen 80;
+
+    server_name example.com;
+
+    location / {
+        proxy_pass http://APP_PRIVATE_IP_ADDRESS:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Set up DNS&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;For reference, here's &lt;a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean"&gt;Digital Ocean's Guide&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Once you have that the app and web servers up and running on your droplet, its a matter of setting up your DNS to point to it. First head on over to the service that manages your domain name, goDaddy etc., and point the nameservers associated with your domain name to:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;NS1.DIGITALOCEAN.COM  
+NS2.DIGITALOCEAN.COM  
+NS3.DIGITALOCEAN.COM  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, in your Digital Ocean Dashboard, navigate to the Networking &gt; Domain menu.  While there, in the appropriate fields, fill in your domain name and your droplet of choice and hit 'Create Record'.  &lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Conclusion&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;That should get you where you need to be.  Your app is live and hosted on a domain name of your choice!  Digital Ocean takes a bit more set up than something like Heroku, but you also have a lot more control over how things are being run on your server!&lt;/p&gt;</content:encoded></item><item><title>Streaming Audio Goodness from Amazon S3 to the Client's Ears</title><description>&lt;p&gt;Built up this cool little feature the other day for a project of mine.  I'm going to go through how I got audio files stored on Amazon's S3 to stream down from on high and play in the browser.&lt;/p&gt;
+
+&lt;p&gt;If you're only here for the code, &lt;a href="https://github.com/alexzywiak/s3StreamExample"&gt;here you go&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If&lt;/p&gt;</description><link>http://localhost:2368/streaming-audio-goodness-from-amazon-s3-to-the-clients-ears/</link><guid isPermaLink="false">392b596b-c74e-4f9a-8158-fd6ad9d4ecdf</guid><category>AWS</category><category>S3</category><category>NodeJS</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 06 Jan 2016 02:58:38 GMT</pubDate><content:encoded>&lt;p&gt;Built up this cool little feature the other day for a project of mine.  I'm going to go through how I got audio files stored on Amazon's S3 to stream down from on high and play in the browser.&lt;/p&gt;
+
+&lt;p&gt;If you're only here for the code, &lt;a href="https://github.com/alexzywiak/s3StreamExample"&gt;here you go&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If you don't have an &lt;a href="https://aws.amazon.com/"&gt;Amazon Web Service&lt;/a&gt; account, you're going to need to head over there to get some creds.&lt;/p&gt;
+
+&lt;p&gt;This S3 streamer will be split up into three files along with a loading GIF so users don't get impatient.&lt;/p&gt;
+
+&lt;pre&gt;
+- index.html
+- server.js
+- config.js
+&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Server Set Up&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;First, we'll whip up an express server to handle two routes.  One route will serve up &lt;code&gt;index.html&lt;/code&gt; and the other will stream our S3 sounds.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var express = require('express');  
+var app = express();
+
+// Serve up index.html
+app.use('/', express.static(__dirname));
+
+app.get('/audio', function(req, res) {  
+  // Add s3 streaming in here
+});
+
+// Start Listenin
+app.listen(3000, function() {  
+  console.log('makin music on 3000');
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, we'll have to configure an S3 client.  I found the &lt;a href="https://www.npmjs.com/package/s3"&gt;s3&lt;/a&gt; npm module to be really easy to use.  It lets you set up a client, upload and download files without too much extra work.  That said, it's a pretty high level  module and if you need finer control over what's going on up there, check out (knox)[https://www.npmjs.com/package/knox] or the official Amazon module &lt;a href="https://www.npmjs.com/package/aws-sdk"&gt;aws-sdk&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Make sure and install &lt;code&gt;s3&lt;/code&gt; then require it in &lt;code&gt;server.js&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;npm install s3&lt;/pre&gt;
+
+&lt;p&gt;S3 will need to check out credentials first.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var s3 = require('s3');
+
+//...
+
+// Set up s3 credentials
+var client = s3.createClient({  
+  s3Options: {
+    accessKeyId: &amp;lt;YOUR ACCESS KEY&amp;gt;,
+    secretAccessKey: &amp;lt;YOUR SECRET KEY&amp;gt;
+  }
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That done, we'll fill in our route.  To stream audio, &lt;code&gt;s3&lt;/code&gt; includes a &lt;code&gt;downloadStream&lt;/code&gt; method which will create a read stream pointed at a file stored on S3 and then pipe it down to the client response.  &lt;/p&gt;
+
+&lt;p&gt;To tell &lt;code&gt;s3&lt;/code&gt; which file we want to download, we need to pass it the name of the S3 Bucket it is stored in as well as its Key value.  I have an mp3 file cleverly named &lt;code&gt;test.mp3&lt;/code&gt; stored in a bucket named &lt;code&gt;New-Bucket-1020&lt;/code&gt;.  Of course, yours can be named whatever your heart desires.  We'll save the bucket and key information in a &lt;code&gt;params&lt;/code&gt; object and pass that to the &lt;code&gt;downloadStream&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;We'll attach two event listeners onto the download stream.  One to check for errors and send a 404 if the files doesn't exist, and the other to listen for incoming headers.  When the headers come in, we'll send that information down to the client so it knows what the hell is going on.&lt;/p&gt;
+
+&lt;p&gt;Finally, we'll pipe &lt;code&gt;downloadStream&lt;/code&gt; to the response to get the tunes flowing.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;app.get('/audio', function(req, res) {
+
+  var params = {
+    Bucket: 'New-Bucket-1020',
+    Key: 'test.mp3'
+  };
+
+  var downloadStream = client.downloadStream(params);
+
+  downloadStream.on('error', function() {
+    res.status(404).send('Not Found');
+  });
+  downloadStream.on('httpHeaders', function(statusCode, headers, resp) {
+    // Set Headers
+    res.set({
+      'Content-Type': headers['content-type']
+    });
+  });
+
+  // Pipe download stream to response
+  downloadStream.pipe(res);
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Set Up the Client&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;On &lt;code&gt;index.html&lt;/code&gt; we'll render two buttons, &lt;code&gt;play&lt;/code&gt; and &lt;code&gt;stop&lt;/code&gt;, which will do exactly what you hope they would.  &lt;/p&gt;
+
+&lt;p&gt;We'll include a script that will start by grabbing the browser's &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/AudioContext"&gt;AudioContext&lt;/a&gt; so we can get access to the speakers.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;play&lt;/code&gt; button will call the &lt;code&gt;playTunes&lt;/code&gt; function which will trigger an ajax request to our server which will start the audio stream.  When the data comes through, we'll put it through a helper function, &lt;code&gt;process&lt;/code&gt; which will do most of our work.  The &lt;code&gt;process&lt;/code&gt; function will create a &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createBufferSource"&gt;buffer source node&lt;/a&gt;, &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/decodeAudioData"&gt;decode&lt;/a&gt; the Data from our stream, plug it into the user's speakers, and tell the source to start playing.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;    window.AudioContext = window.AudioContext ||     window.webkitAudioContext;
+    var context = new AudioContext();
+
+// ...
+
+    function playTunes() {
+      var request = new XMLHttpRequest();
+      request.open("GET", "http://localhost:3000/audio/", true);
+      request.responseType = "arraybuffer";
+
+      spinner.show();
+
+      request.onload = function() {
+          spinner.hide();
+        var Data = request.response;
+        process(Data);
+      };
+
+      request.send();
+    }
+
+    function process(Data) {
+      source = context.createBufferSource(); // Create Sound Source
+      context.decodeAudioData(Data, function(buffer) {
+        source.buffer = buffer;
+        source.connect(context.destination);
+        source.start(context.currentTime);
+      });
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Lastly, we'll add a function to stop the music, and some logic to show/hide a spinner gif while we're waiting for the stream to come on down from the server.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;    var spinner = document.getElementById('spinner');
+
+    spinner.hide = function(){
+        this.style.display = 'none';
+    };
+
+    spinner.show = function(){
+        this.style.display = 'block';
+    }
+
+    function stopTunes(){
+        if(source.stop){
+            source.stop();
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Our HTML will look like this.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;&amp;lt;!DOCTYPE html&amp;gt;  
+&amp;lt;html&amp;gt;  
+&amp;lt;head&amp;gt;  
+    &amp;lt;title&amp;gt;S3 Audio&amp;lt;/title&amp;gt;
+&amp;lt;/head&amp;gt;  
+&amp;lt;body&amp;gt;  
+    &amp;lt;button onclick="playTunes()"&amp;gt;Play&amp;lt;/button&amp;gt;
+    &amp;lt;button onclick="stopTunes()"&amp;gt;Stop&amp;lt;/button&amp;gt;
+    &amp;lt;div&amp;gt;
+        &amp;lt;img id="spinner" style="display:none" src="ajax-loader.gif" alt=""&amp;gt;
+    &amp;lt;/div&amp;gt;
+    &amp;lt;script&amp;gt; // app logic &amp;lt;/script&amp;gt;
+&amp;lt;/body&amp;gt;  
+&amp;lt;/html&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So there it is!  A quick way to stream audio samples down from S3.  Full code is right &lt;a href="https://github.com/alexzywiak/s3StreamExample"&gt;here&lt;/a&gt;.&lt;/p&gt;</content:encoded></item><item><title>Best of Both Worlds: Modelling Relational Data With Mongoose</title><description>&lt;p&gt;The relational debate rages on.  On the relational side of things, you have single sources of truth, all the joins you could possibly want, and fast queries on everything you could possibly imagine. Then you got the rebels tossing around POJOs and rapidly iterating the super loose tables.  What is&lt;/p&gt;</description><link>http://localhost:2368/best-of-both-worlds-modelling-relational-data-with-mongoose/</link><guid isPermaLink="false">3ca79ea9-2298-4635-88e4-318d59778625</guid><category>Express</category><category>MongoDB</category><category>Mongoose</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Sat, 12 Dec 2015 22:13:42 GMT</pubDate><content:encoded>&lt;p&gt;The relational debate rages on.  On the relational side of things, you have single sources of truth, all the joins you could possibly want, and fast queries on everything you could possibly imagine. Then you got the rebels tossing around POJOs and rapidly iterating the super loose tables.  What is a dev to do?&lt;/p&gt;
+
+&lt;p&gt;I was working on a project where we were modelling some highly related data using MongoDB, projects as parts of an organization, and we came up against the inevitable existential question, to embed or not to embed?&lt;/p&gt;
+
+&lt;p&gt;Embedding documents keeps everything in one place and makes all relevant data easily accessible with a single query.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;//Organizations - Embedded
+{
+  name: 'Organization',
+  projects: [{name: 'project1'}, {name:'project2'}]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Creating separate collections means we have only one source of truth to make updates on and we can easily access any piece of the hierarchy.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;//Organizations - Separate Collections
+{
+  name: 'Organization',
+  projects: [project1._id, project2._id]
+}
+// Projects collection
+{
+  name: 'Project1'
+}
+{
+  name: 'Project2'
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We ended up choosing to separate out the collections.  There was too much overlap between different documents; if you updated one sub document, you had to make sure it was updated everywhere.  And it proved very difficult to make complex queries and operations on sub documents.  That being said, how can you conveniently link related documents together in MongoDB?&lt;/p&gt;
+
+&lt;p&gt;The solution I ended up using was to create separate collections using Mongoose &lt;a href="http://mongoosejs.com/docs/2.7.x/docs/populate.html"&gt;DB-refs&lt;/a&gt; to link related documents on different collections, and then creating a middleware function to auto-populate the documents with their db-refs on any query.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;DB-refs&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;DB-refs essentially save a reference to an _id property for one or many other documents that are related to the current document.  From the Mongoose docs:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var StorySchema = new Schema({  
+    _creator : { type: Schema.ObjectId, ref: 'Person' }
+  , title    : String
+  , fans     : [{ type: Schema.ObjectId, ref: 'Person' }]
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The story schema can be linked to a single _creator document and any number of fan documents.  These references will be saved in the &lt;code&gt;_creator&lt;/code&gt; and &lt;code&gt;fans&lt;/code&gt; properties respectively.  To set up these connections, you only need to save the corresponding _id value in _creator.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var aaron = new Person({ name: 'Aaron', age: 100 });
+
+aaron.save(function (err) {  
+  if (err) ...
+
+  var story1 = new Story({
+      title: "A man who cooked Nintendo"
+    , _creator: aaron._id
+  });
+
+  story1.save(function (err) {
+    if (err) ...
+  });
+})
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now the story document has a reference to 'aaron', its creator.  To get access to this document, you can 'populate' it to fill in all the DB-ref fields with the documents that they actually reference.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;Story  
+.findOne({ title: /Nintendo/i })
+.populate('_creator', ['name']) // &amp;lt;-- only return the Persons name
+.exec(function (err, story) {
+  if (err) ..
+
+  console.log('The creator is %s', story._creator.name);
+  // prints "The creator is Aaron"
+
+  console.log('The creators age is %s', story._creator.age)
+  // prints "The creators age is null'
+})
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now this is all well and good, but you have to set up the query to populate.  And what if you have multiple fields you want to populate?  And what if you want to do it all the time?  It would be pain in the ass to have to include populate on every single query you write out, so we'll ship it off to Mongoose middleware to do it each time for us.&lt;/p&gt;
+
+&lt;p&gt;Shifting gears away from the stories a little, in my recent project we had a users schema that held references to organizations, projects, and tasks all of which were separate collections in their own right.&lt;/p&gt;
+
+&lt;p&gt;Here's what our user schema looked like:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;var usersSchema = new Schema({  
+  username: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  organization: [{
+    type: Schema.ObjectId,
+    ref: 'Org'
+  }],
+  project_list: [{
+    type: Schema.ObjectId,
+    ref: 'Project'
+  }],
+  task_list: [{
+    type: Schema.ObjectId,
+    ref: 'Task'
+  }]
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It would be nice, no matter when you grabbed a user from the DB, it had all of those fields automatically populated, right?&lt;/p&gt;
+
+&lt;p&gt;On defining the model, you can hook into the Mongoose middleware, specifically the 'init' hook which will get fired whenever an existing model is grabbed from the DB.  Inside of the users' model definition, I added in this hook.  It makes use of the Mongoose Model's populate method.  You can pass a space delimited string of all the fields you want to populate.  Any time a user model is picked up, it will have each of those DB-ref fields filled out.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;db.usersSchema.pre('init', function(next, data) {  
+  User.populate(data, {
+    path: 'organization project_list task_list'
+  }, function(err, user) {
+    data = user;
+    next();
+  });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I found this solution to work quite nicely with what we were trying to achieve.  We maintained separate, highly related collections.  Each collection was easy to access and update, and there was only one source of truth for each entry.  We also got access to the convenience and intuitive structure of POJOs automatically built for us with every query!  A nice little solution that gave us the best of both worlds.&lt;/p&gt;</content:encoded></item><item><title>Getting a Written Transcript for a Youtube Video Using IBM Watson</title><description>&lt;p&gt;I will go through a quick script that will download audio from a Youtube video and then send it off to the IBM Watson speech to text service to get a written transcript.&lt;/p&gt;
+
+&lt;p&gt;If you're the impatient type, here's the complete code. &lt;br&gt;
+&lt;a href="https://github.com/alexzywiak/youtube-transcriber"&gt;youtube-transcriber&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set Up&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To illustrate, I'm going to&lt;/p&gt;</description><link>http://localhost:2368/getting-a-written-transcript-for-a-youtube-video-using-ibm-watson-2/</link><guid isPermaLink="false">14731786-1ffb-4b5d-a1b0-2e10b18f8cfd</guid><category>NodeJS</category><category>APIs</category><category>IBM Watson</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Thu, 10 Dec 2015 02:41:10 GMT</pubDate><content:encoded>&lt;p&gt;I will go through a quick script that will download audio from a Youtube video and then send it off to the IBM Watson speech to text service to get a written transcript.&lt;/p&gt;
+
+&lt;p&gt;If you're the impatient type, here's the complete code. &lt;br&gt;
+&lt;a href="https://github.com/alexzywiak/youtube-transcriber"&gt;youtube-transcriber&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Set Up&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To illustrate, I'm going to create three files.  &lt;code&gt;youtube.js&lt;/code&gt; to handle downloading the audio file, &lt;code&gt;watson.js&lt;/code&gt; to get the transcription from Watson, and &lt;code&gt;index.js&lt;/code&gt; to tie them together.  There are a handful of modules we'll have to prepare, also.&lt;/p&gt;
+
+&lt;p&gt;We're going to use &lt;a href="https://rg3.github.io/youtube-dl/"&gt;youtube-dl&lt;/a&gt; to handle getting the audio for us.  If you have &lt;code&gt;homebrew&lt;/code&gt;, install &lt;code&gt;youtube-dl&lt;/code&gt; by running:&lt;/p&gt;
+
+&lt;pre&gt;brew install youtube-dl&lt;/pre&gt;
+
+&lt;p&gt;We will have to do some audio processing as well.  &lt;code&gt;youtube-dl&lt;/code&gt; can make use of &lt;a href="https://www.ffmpeg.org/"&gt;ffmpeg&lt;/a&gt; to do all its auditory dirty work, so go ahead and install that, too.&lt;/p&gt;
+
+&lt;pre&gt;brew install ffmpeg&lt;/pre&gt;
+
+&lt;p&gt;While we're on the module train, let's prep all the necessary npm packages.&lt;/p&gt;
+
+&lt;pre&gt;npm install bluebird watson-developer-cloud fluent-ffmpeg&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Downloading Audio from Youtube&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;To download the audio, we will spawn a node child process to run &lt;code&gt;youtube-dl&lt;/code&gt;.The spawn process does all the work for us.  We pass the URL of the video we want, specify only to grab the audio, set the output to mp3, and set the file name.  I have the file named simply as &lt;code&gt;file.mp3&lt;/code&gt;, but it can be changed to whatever you need.  Check the &lt;a href="https://rg3.github.io/youtube-dl/"&gt;youtube-dl&lt;/a&gt; docs for more details.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// youtube.js
+var spawn = require('child_process').spawn;  
+var Promise = require('bluebird');  
+var ffmpeg = require('fluent-ffmpeg');  
+var path = require('path');
+
+exports.getYouTubeAudio = function(videoId){  
+    return new Promise(function(resolve, reject){
+      // Install youtube_dl locally: brew install youtube-dl
+    youtube_dl = spawn('youtube-dl', ['--extract-audio', '--audio-format', 'mp3', '-o', 'file.%(ext)s', "http://www.youtube.com/watch?v=" + videoId]);
+
+    youtube_dl.stdout.on('data', function(data){
+      console.log(data.toString());
+    });
+
+    youtube_dl.stderr.on('data', function(data){
+      process.stderr.write(data);
+    });
+
+    // brew install ffmpeg
+    youtube_dl.on('exit', function(){
+      var mp3File = path.join(__dirname, 'file.mp3');
+      var flacFile = path.join(__dirname, 'file.flac')
+      ffmpeg(mp3File)
+        .output(flacFile)
+        .on('end', function(){
+          resolve();
+        })
+        .on('error', function(err){
+          reject(err);
+        })
+        .run();
+    });
+  });
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Of course, Watson takes &lt;code&gt;flac&lt;/code&gt; files, so we'll have to convert our &lt;code&gt;mp3&lt;/code&gt;.  We can use the &lt;code&gt;fluent-ffmpeg&lt;/code&gt; module to take care of this for us.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;    //youtube.js
+    var ffmpeg = require('fluent-ffmpeg);
+...
+    youtube_dl.on('exit', function(){
+      var mp3File = path.join(__dirname, 'file.mp3');
+      var flacFile = path.join(__dirname, 'file.flac')
+      ffmpeg(mp3File)
+        .output(flacFile)
+        .on('end', function(){
+          resolve();
+        })
+        .on('error', function(err){
+          reject(err);
+        })
+        .run();
+    });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I've also used Bluebird as a promise library to resolve once the &lt;code&gt;ffmpeg&lt;/code&gt; conversion is complete, so that we can easily chain the download with our next script.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Getting a Transcript from Watson&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;In order to use Watson, you need to head on over to IBM &lt;a href="http://www.ibm.com/cloud-computing/bluemix/?cm_mmc=search-gsn-_-branded-Bluemix-general-_-bmm%20%2Bblue%20%2Bmix%20blue%20mix-_-usa-bm-mkt-oww"&gt;Bluemix&lt;/a&gt; and sign up to get some creds. &lt;/p&gt;
+
+&lt;p&gt;To use Watson in Node, the good folks at IBM were kind enough to create an &lt;a href="https://www.npmjs.com/package/watson-developer-cloud#speech-to-text"&gt;npm module&lt;/a&gt; for us.  So to get connected, include this code.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// watson.js
+var watson = require('watson-developer-cloud');
+
+var speech_to_text = watson.speech_to_text({  
+  username: &amp;lt;bluemix username&amp;gt;,
+  password: &amp;lt;bluemix password&amp;gt;,
+  version: 'v1',
+  url: 'https://stream.watsonplatform.net/speech-to-text/api',
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are a few ways to send and get the transcript from Watson.  I went for streaming as you can send larger files.  As the response is streamed back, we're going to build out a json object and then write it to a file when the transcription stream is done.&lt;/p&gt;
+
+&lt;p&gt;This function will take in the path to the audio file we want to transcribe, &lt;code&gt;file.flac&lt;/code&gt; for our example, and will write the transcript to &lt;code&gt;transcript.json&lt;/code&gt;.  The &lt;code&gt;params&lt;/code&gt; option allows you to specify additional information you want Watson to include.  Here, I asked for timestamps for each word as well as to ignore silence by setting &lt;code&gt;continue&lt;/code&gt; to &lt;code&gt;true&lt;/code&gt;.  If you only want the written transcript, you can stream the output directly into a &lt;code&gt;writeStream&lt;/code&gt; to a text file.  I opted for JSON because I wanted to get at the timestamp objects.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript "&gt;// watson.js
+var watson = require('watson-developer-cloud');  
+var fs = require('fs');  
+var path = require('path');  
+var Promise = require('bluebird');
+
+var speech_to_text = watson.speech_to_text({  
+  username: &amp;lt;bluemix username&amp;gt;,
+  password: &amp;lt;bluemix password&amp;gt;,
+  version: 'v1',
+  url: 'https://stream.watsonplatform.net/speech-to-text/api',
+});
+
+exports.watsonSpeechToText = function(audioFile) {
+
+  return new Promise(function(resolve, reject) {
+
+    var params = {
+      content_type: 'audio/flac',
+      timestamps: true,
+      continuous: true
+    };
+
+    var results = [];
+
+    // create the stream
+    var recognizeStream = speech_to_text.createRecognizeStream(params);
+
+    // pipe in some audio
+    fs.createReadStream(audioFile).pipe(recognizeStream);
+
+    // listen for 'data' events for just the final text
+    // listen for 'results' events to get the raw JSON with interim results, timings, etc.
+
+    recognizeStream.setEncoding('utf8'); // to get strings instead of Buffers from `data` events
+
+    recognizeStream.on('results', function(e) {
+      if (e.results[0].final) {
+        results.push(e);
+      }
+    });
+
+    ['data', 'results', 'error', 'connection-close'].forEach(function(eventName) {
+      recognizeStream.on(eventName, console.log.bind(console, eventName + ' event: '));
+    });
+
+    recognizeStream.on('error', function(err) {
+      util.handleError('Error writing to transcript.json: ' + err);
+    });
+
+    recognizeStream.on('connection-close', function() {
+        var transcriptFile = path.join(__dirname, 'transcript.json');
+
+      fs.writeFile(transcriptFile, JSON.stringify(results), function(err) {
+        if (err) {
+          util.handleError(err);
+        }
+        resolve();
+      });
+    });
+  });
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All you need to do is chain these functions together and you will have all the transcripted goodness you would want!&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Running the Show&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;index.js&lt;/code&gt; will combine our two modules and allow you to run them using the command line.  As it's set up here, run &lt;code&gt;node index.js transcribe &amp;lt;some video id&amp;gt;&lt;/code&gt; and you're up and running!&lt;/p&gt;
+
+&lt;p&gt;Give this one a try: &lt;code&gt;node index.js transcribe I9VA-U69yaY&lt;/code&gt;  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// index.js
+var watson = require('./watson');  
+var youtube = require('./youtube');  
+var path = require('path');
+
+var flags = process.argv.slice(2);
+
+if(flags[0] === 'transcribe'){  
+    youtube.getYouTubeAudio(flags[1])
+        .then(watson.watsonSpeechToText.bind(this, path.join(__dirname, 'file.flac')))
+        .then(function(){
+            console.log('Done transcribing video id: ' + flags[1]);
+        });
+}
+&lt;/code&gt;&lt;/pre&gt;</content:encoded></item></channel></rss>
