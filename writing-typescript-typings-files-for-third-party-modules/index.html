@@ -25,7 +25,7 @@
     <meta property="og:description" content="Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you&#x27;ll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.   One of the snag points" />
     <meta property="og:url" content="http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/" />
     <meta property="article:published_time" content="2016-08-31T23:40:02.000Z" />
-    <meta property="article:modified_time" content="2016-08-31T23:49:38.000Z" />
+    <meta property="article:modified_time" content="2016-09-11T21:56:02.000Z" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Writing Typescript Typings Files for Third Party Modules" />
     <meta name="twitter:description" content="Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you&#x27;ll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.   One of the snag points" />
@@ -51,7 +51,7 @@
     "headline": "Writing Typescript Typings Files for Third Party Modules",
     "url": "http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/",
     "datePublished": "2016-08-31T23:40:02.000Z",
-    "dateModified": "2016-08-31T23:49:38.000Z",
+    "dateModified": "2016-09-11T21:56:02.000Z",
     "description": "Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you&#x27;ll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.   One of the snag points"
 }
     </script>
@@ -128,7 +128,7 @@
 
 <p>Make sure you have <a href="https://www.typescriptlang.org/">typescript</a> set up and installed on your machine.  Create a <code>tsconfig.json</code> file which will dictate our typescript compiler options.  Enter the following settings.</p>
 
-<pre><code>{
+<pre><code class="language-javascript">{
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",
@@ -143,7 +143,7 @@
 
 <p>In the <code>main.ts</code> file add in the following code.</p>
 
-<pre><code>import * as googleApis from 'googleapis';  
+<pre><code class="language-javascript">import * as googleApis from 'googleapis';  
 const Oauth2 = googleApis.auth.OAuth2;  
 import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './credentials';
 
@@ -170,7 +170,7 @@ console.log(url);
 
 <p>Create a <code>types</code> directory with the following structure.</p>
 
-<pre><code>types  
+<pre><code class="language-javascript">types  
 ├── googleapis
 │   └── index.d.ts
 └── index.d.ts
@@ -182,7 +182,7 @@ console.log(url);
 
 <p>In this case, <code>types/index.d.ts</code> will hold one reference to the as of yet unwritten <code>googleapis/index.d.ts</code> file.</p>
 
-<pre><code>/// &lt;reference path="googleapis/index.d.ts" /&gt;
+<pre><code class="language-javascript">/// &lt;reference path="googleapis/index.d.ts" /&gt;
 </code></pre>
 
 <p>Depending on your <code>tsconfig.json</code> settings, this file isn't always necessary.  If your <code>types</code> directory is in a sibling or sub directory from <code>tsconfig</code> and you're grabbing all <code>.ts</code> files, typescript will find it for you.  If your project structure is different, you'll have to make sure and include it specifically.</p>
@@ -191,7 +191,7 @@ console.log(url);
 
 <p>All of the typing heavy lifting will be done in <code>types/googleapis/index.d.ts</code>.  The first thing we need to do is create an <a href="https://www.typescriptlang.org/docs/handbook/modules.html">ambient module</a>.  Ambient modules are type declarations that don't define any of the nitty gritty of what the code actually does, but just defines its shape.  We will declare a module with the same name as the npm module.  As the <code>googleapis</code> export is an object, our ambient module will export a <code>const</code> variable implementing an interface that will contain our typings.  This exported typed value can mirror whatever the module exports whether it's a function, object or constructor. </p>
 
-<pre><code>declare module 'googleapis' {
+<pre><code class="language-javascript">declare module 'googleapis' {
 
     interface GoogleApi {
     }
@@ -210,7 +210,7 @@ console.log(url);
 
 <p>We are interested in the <code>googleapis.auth.Oauth2</code> constructor function, and the <code>generateAuthUrl</code> method on the object that it returns so we can begin by defining the <code>auth</code> property, which returns an object of type <code>Oauth2Constructor</code>.</p>
 
-<pre><code>...
+<pre><code class="language-javascript">...
     interface Oauth2Constructor {
     }
 
@@ -226,7 +226,7 @@ console.log(url);
 
 <p>The <code>Oauth2Constructor</code> is a newable constructor function, which we can indicate to typescript by including the <code>new</code> keyword in front of its function definition, that requires three strings as arguments. The constructor in turn returns what we'll call the <code>Oauth2Client</code> which has the <code>generateAuthUrl</code> function we're interested in.  Again, using the documentation, we'll define the function signature for the method, extracting out the options argument it requires into its own interface.</p>
 
-<pre><code>...
+<pre><code class="language-javascript">...
     interface UrlOptions {
         access_type: string;
         scope: string[];
