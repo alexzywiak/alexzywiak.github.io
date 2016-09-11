@@ -1,4 +1,4 @@
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>Lingua Franca</title><description>Javascript and the Web</description><link>http://localhost:2368/</link><generator>Ghost 0.9</generator><lastBuildDate>Sun, 11 Sep 2016 21:58:42 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Writing Typescript Typings Files for Third Party Modules</title><description>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>Lingua Franca</title><description>Javascript and the Web</description><link>http://localhost:2368/</link><generator>Ghost 0.9</generator><lastBuildDate>Sun, 11 Sep 2016 22:01:42 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Writing Typescript Typings Files for Third Party Modules</title><description>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
 
 &lt;p&gt;One of the snag points&lt;/p&gt;</description><link>http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/</link><guid isPermaLink="false">d669282c-ea12-4f57-baf5-d4fb0a521c8d</guid><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 31 Aug 2016 23:40:02 GMT</pubDate><content:encoded>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
 
@@ -29,7 +29,7 @@
 
 &lt;p&gt;In the &lt;code&gt;main.ts&lt;/code&gt; file add in the following code.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class="language-javascript"&gt;import * as googleApis from 'googleapis';  
+&lt;pre&gt;&lt;code class="language-typescript"&gt;import * as googleApis from 'googleapis';  
 const Oauth2 = googleApis.auth.OAuth2;  
 import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './credentials';
 
@@ -56,7 +56,7 @@ console.log(url);
 
 &lt;p&gt;Create a &lt;code&gt;types&lt;/code&gt; directory with the following structure.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class="language-javascript"&gt;types  
+&lt;pre&gt;&lt;code&gt;types  
 ├── googleapis
 │   └── index.d.ts
 └── index.d.ts
@@ -68,7 +68,7 @@ console.log(url);
 
 &lt;p&gt;In this case, &lt;code&gt;types/index.d.ts&lt;/code&gt; will hold one reference to the as of yet unwritten &lt;code&gt;googleapis/index.d.ts&lt;/code&gt; file.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class="language-javascript"&gt;/// &amp;lt;reference path="googleapis/index.d.ts" /&amp;gt;
+&lt;pre&gt;&lt;code&gt;/// &amp;lt;reference path="googleapis/index.d.ts" /&amp;gt;
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Depending on your &lt;code&gt;tsconfig.json&lt;/code&gt; settings, this file isn't always necessary.  If your &lt;code&gt;types&lt;/code&gt; directory is in a sibling or sub directory from &lt;code&gt;tsconfig&lt;/code&gt; and you're grabbing all &lt;code&gt;.ts&lt;/code&gt; files, typescript will find it for you.  If your project structure is different, you'll have to make sure and include it specifically.&lt;/p&gt;
@@ -77,7 +77,7 @@ console.log(url);
 
 &lt;p&gt;All of the typing heavy lifting will be done in &lt;code&gt;types/googleapis/index.d.ts&lt;/code&gt;.  The first thing we need to do is create an &lt;a href="https://www.typescriptlang.org/docs/handbook/modules.html"&gt;ambient module&lt;/a&gt;.  Ambient modules are type declarations that don't define any of the nitty gritty of what the code actually does, but just defines its shape.  We will declare a module with the same name as the npm module.  As the &lt;code&gt;googleapis&lt;/code&gt; export is an object, our ambient module will export a &lt;code&gt;const&lt;/code&gt; variable implementing an interface that will contain our typings.  This exported typed value can mirror whatever the module exports whether it's a function, object or constructor. &lt;/p&gt;
 
-&lt;pre&gt;&lt;code class="language-javascript"&gt;declare module 'googleapis' {
+&lt;pre&gt;&lt;code class="language-typescript"&gt;declare module 'googleapis' {
 
     interface GoogleApi {
     }
@@ -96,7 +96,7 @@ console.log(url);
 
 &lt;p&gt;We are interested in the &lt;code&gt;googleapis.auth.Oauth2&lt;/code&gt; constructor function, and the &lt;code&gt;generateAuthUrl&lt;/code&gt; method on the object that it returns so we can begin by defining the &lt;code&gt;auth&lt;/code&gt; property, which returns an object of type &lt;code&gt;Oauth2Constructor&lt;/code&gt;.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class="language-javascript"&gt;...
+&lt;pre&gt;&lt;code class="language-typescript"&gt;...
     interface Oauth2Constructor {
     }
 
@@ -112,7 +112,7 @@ console.log(url);
 
 &lt;p&gt;The &lt;code&gt;Oauth2Constructor&lt;/code&gt; is a newable constructor function, which we can indicate to typescript by including the &lt;code&gt;new&lt;/code&gt; keyword in front of its function definition, that requires three strings as arguments. The constructor in turn returns what we'll call the &lt;code&gt;Oauth2Client&lt;/code&gt; which has the &lt;code&gt;generateAuthUrl&lt;/code&gt; function we're interested in.  Again, using the documentation, we'll define the function signature for the method, extracting out the options argument it requires into its own interface.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class="language-javascript"&gt;...
+&lt;pre&gt;&lt;code class="language-typescript"&gt;...
     interface UrlOptions {
         access_type: string;
         scope: string[];
