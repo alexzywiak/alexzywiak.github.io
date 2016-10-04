@@ -1,6 +1,697 @@
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>Lingua Franca</title><description>Javascript and the Web</description><link>http://localhost:2368/</link><generator>Ghost 0.9</generator><lastBuildDate>Sun, 11 Sep 2016 22:01:42 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Writing Typescript Typings Files for Third Party Modules</title><description>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel><title>Lingua Franca</title><description>Javascript and the Web</description><link>http://localhost:2368/</link><generator>Ghost 0.9</generator><lastBuildDate>Tue, 04 Oct 2016 18:06:36 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>React Redux with Typescript</title><description>&lt;p&gt;Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers, it is all too easy to lose the structure of the root state and to pass inappropriate data through action payloads.  Typescript adds a compile time guard against falling into reducer&lt;/p&gt;</description><link>http://localhost:2368/react-redux-with-typescript/</link><guid isPermaLink="false">a0a415ae-e1bc-4307-a50c-f459d7fafe40</guid><category>React</category><category>Redux</category><category>Typescript</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Tue, 04 Oct 2016 17:52:51 GMT</pubDate><content:encoded>&lt;p&gt;Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers, it is all too easy to lose the structure of the root state and to pass inappropriate data through action payloads.  Typescript adds a compile time guard against falling into reducer hell.  &lt;/p&gt;
 
-&lt;p&gt;One of the snag points&lt;/p&gt;</description><link>http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/</link><guid isPermaLink="false">d669282c-ea12-4f57-baf5-d4fb0a521c8d</guid><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 31 Aug 2016 23:40:02 GMT</pubDate><content:encoded>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
+&lt;p&gt;Unfortunately, to use typescript straight out of the box with Redux, all the reducers and actions must be explicitly given types that agree with each other.  All this type duplication can just introduce a new place for error and discrepancy.&lt;/p&gt;
+
+&lt;p&gt;In a recent project, our team developed a set of utility functions and complementary types and interfaces that allow for strong typing in Redux with a minimum of type and interface duplication.&lt;/p&gt;
+
+&lt;p&gt;The pattern has the following benefits:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Strongly Typed Redux&lt;/strong&gt; - No more throwing around the wrong payload.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Only define an action payload's type once&lt;/strong&gt; - The type is then inferred in all interested reducers, action creators, and calling components.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Defined Root State&lt;/strong&gt; - Strongly typed state with easily referenceable structure.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To illustrate the pattern and how to use it, I'll walk through a trivial Redux app that implements strong typing.  I'll assume familiarity with React/Redux architecture as well as a webpack build system, but if you'd like a introduction to that, &lt;a href="https://alexzywiak.github.io/react-redux-a-flash-messenger-example/"&gt;check out this post&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If, instead, you'd prefer to skip my prosaic meanderings, you can check out the example &lt;a href="https://github.com/alexzywiak/react-redux-typescript"&gt;code here on github&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Our app will be a trivial masterpiece consisting of two components, &lt;code&gt;user_buttons&lt;/code&gt; and &lt;code&gt;flash_message&lt;/code&gt;.  The former will render two buttons that allow the user to dispatch an action and &lt;code&gt;flash_message&lt;/code&gt; will subscribe to the state and display the content of a fairly worthless message.&lt;/p&gt;
+
+&lt;p&gt;This walkthrough will follow this outline.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;File Structure&lt;/li&gt;
+&lt;li&gt;Typescript Setup&lt;/li&gt;
+&lt;li&gt;Actions&lt;/li&gt;
+&lt;li&gt;Reducers&lt;/li&gt;
+&lt;li&gt;Wiring Components&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Throughout, I'll introduce how to implement a variety of utility functions that will allow our application to easily make use of Typescript's goodness.  I'll focus on the essential helper functions, but will omit some code sections and interfaces for brevity.  Check the example code repo to fill in any holes.&lt;/p&gt;
+
+&lt;h3 id="projectstructure"&gt;Project Structure&lt;/h3&gt;
+
+&lt;p&gt;Our base directory structure is as follows:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;├── actions
+├── app
+├── interfaces
+├── reducers
+└── utils
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;actions&lt;/code&gt; and &lt;code&gt;reducers&lt;/code&gt; directories will contain their eponymous redux logic.  The &lt;code&gt;app&lt;/code&gt; directory holds our components and &lt;code&gt;interfaces&lt;/code&gt; has all interfaces required through our application.  The &lt;code&gt;utils&lt;/code&gt; folder will house the specific functions and interfaces that our team developed to allow our project to easily make use of strong typing.  I'll go into more detail of the file structure in the following sections.&lt;/p&gt;
+
+&lt;h3 id="typescriptsetup"&gt;Typescript Setup&lt;/h3&gt;
+
+&lt;p&gt;Setting up Typescript with your React project consists of two steps: adding the correct loader to Webpack and downloading typings files for third party libraries.&lt;/p&gt;
+
+&lt;h6 id="webpack"&gt;Webpack&lt;/h6&gt;
+
+&lt;p&gt;To set up Typescript with Webpack, make use of the &lt;a href="https://github.com/TypeStrong/ts-loader"&gt;ts-loader&lt;/a&gt; npm package for all &lt;code&gt;.ts&lt;/code&gt; and &lt;code&gt;.tsx&lt;/code&gt; files.  Then, add in a &lt;a href="https://www.typescriptlang.org/docs/handbook/tsconfig-json.html"&gt;tsconfig.json&lt;/a&gt; to manage your Typescript settings.  I also made use of the &lt;a href="https://webpack.github.io/docs/webpack-dev-server.html"&gt;webpack-dev-server&lt;/a&gt; to easily run our app.  Checkout the &lt;a href="https://github.com/alexzywiak/react-redux-typescript"&gt;code repo for an example&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h6 id="typings"&gt;Typings&lt;/h6&gt;
+
+&lt;p&gt;Conveniently enough, there are a number of high quality type declaration files available so that we can use third party modules with Typescript without having to write the damn things ourselves.  &lt;a href="https://www.npmjs.com/package/typings"&gt;Typings&lt;/a&gt; is a package similar to &lt;code&gt;npm&lt;/code&gt; that allows us to manage our type declaration files.  Install &lt;code&gt;typings&lt;/code&gt; as a dev-dependency, and then run the rather unfriendly &lt;code&gt;typings install dt~&amp;lt;libary name&amp;gt; --global --save&lt;/code&gt;.  This will grab the typings file for you, and save it to &lt;code&gt;typings.json&lt;/code&gt; (a &lt;code&gt;package.json&lt;/code&gt; equivalent).  Grab the typings files for all the external libraries and typings will make their interfaces globally available in your project.&lt;/p&gt;
+
+&lt;h3 id="actions"&gt;Actions&lt;/h3&gt;
+
+&lt;p&gt;In our project, we named action files by the section of the application they manipulate.  Our action directory for this example will look like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;actions  
+└── user_buttons
+    ├── action_types.ts
+    └── actions.ts
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In our case, only &lt;code&gt;user_buttons&lt;/code&gt; is concerned with dispatching actions, but this pattern would be repeated for other sections in larger apps. We'll begin by creating a map of our action constants strings in &lt;code&gt;action_types.ts&lt;/code&gt;.  By making use of the &lt;code&gt;createActionConstantsMap&lt;/code&gt; and &lt;code&gt;actionType&amp;lt;T&amp;gt;&lt;/code&gt; helper functions, we'll be able to create a map of action constants that have properly typed payloads.  This is the core of the strong typing around our Redux state and its actions.&lt;/p&gt;
+
+&lt;p&gt;I'll illustrate the use of both helper functions, and then show what they're doing under the hood.&lt;/p&gt;
+
+&lt;p&gt;Our app will have one action, &lt;code&gt;SEND_FLASH_MESSAGE&lt;/code&gt; which will have a payload of type &lt;code&gt;FlashMessage&lt;/code&gt;.  The &lt;code&gt;FlashMessage&lt;/code&gt; type will be an object with &lt;code&gt;message&lt;/code&gt; and &lt;code&gt;className&lt;/code&gt; properties.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// action_types.ts
+import { FlashMessage } from '../../interfaces/flash_message.interface';  
+import { actionType, createActionConstantsMap } from '../../utils/redux';
+
+export default createActionConstantsMap('userButtons', {  
+  SEND_FLASH_MESSAGE: actionType&amp;lt;FlashMessage&amp;gt;()
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;actionType&amp;lt;T&amp;gt;&lt;/code&gt; function does the necessary type casting for us.  When we pass the action map in &lt;code&gt;action_types.ts&lt;/code&gt; to &lt;code&gt;createActionConstantsMap&lt;/code&gt;, we need to pass our desired payload structure as the generic argument to &lt;code&gt;actionType&amp;lt;T&amp;gt;&lt;/code&gt;.  Here's what &lt;code&gt;actionType&lt;/code&gt; is doing in the background.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// reduxTypes.ts
+
+export function actionType&amp;lt;TPayload&amp;gt;() {  
+  return null as ActionType&amp;lt;TPayload&amp;gt;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This function will cast the value of our action map at that specific key (in our case &lt;code&gt;SEND_FLASH_MESSAGE&lt;/code&gt;) as an &lt;code&gt;ActionType&amp;lt;TPayload&amp;gt;&lt;/code&gt; type with the given payload interface &lt;em&gt;regardless of the value&lt;/em&gt;.  The function will return &lt;code&gt;null&lt;/code&gt;, but a properly cast &lt;code&gt;null&lt;/code&gt; value for each action key.  &lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;createActionConstantsMap&lt;/code&gt; function will take care of creating an actual string value constant to be passed around and referenced by the reducers.  As it is, the object we pass into &lt;code&gt;createActionConstantsMap&lt;/code&gt; in &lt;code&gt;action_types.ts&lt;/code&gt;, has a key value &lt;code&gt;SEND_FLASH_MESSAGE&lt;/code&gt; and a value of &lt;code&gt;null&lt;/code&gt; typed as an &lt;code&gt;ActionType&amp;lt;FlashMessage&amp;gt;&lt;/code&gt;.  Null isn't particularly useful for distinguishing actions inside the reducers, so we'll generate a name-spaced string for each key within the &lt;code&gt;createActionConstantsMap&lt;/code&gt; function.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// actionUtils.ts
+
+export function createActionConstantsMap&amp;lt;T extends ActionTypeMap&amp;gt;(prefix: string, input: T): T {  
+  prefix = prefix.toUpperCase() + '_';
+
+  const map = Object.keys(input).reduce((acc, key) =&amp;gt; {
+    const namespacedActionType = prefix + key;
+    return Object.assign(acc, { [key]: namespacedActionType });
+  }, {}) as T;
+  return map;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The typing comes in through a combination of type inference and type casting inside this function.  When we pass our &lt;code&gt;input&lt;/code&gt; argument, it has a structure as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;{
+  SEND_FLASH_MESSAGE: null, // Cast as ActionType&amp;lt;FlashMessage&amp;gt;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This type is maintained inside &lt;code&gt;createActionConstantsMap&lt;/code&gt; as the generic type &lt;code&gt;T&lt;/code&gt; which is inferred by Typescript.  Next, we generate an new object with the same key values, but name-spaced strings, and then &lt;strong&gt;cast that object as type &lt;code&gt;T&lt;/code&gt;&lt;/strong&gt;.  This is the key point from whence the typing magic flows.  When we reference the &lt;code&gt;SEND_FLASH_MESSAGE&lt;/code&gt; property on the action types map, it has the proper payload interface bound to it.&lt;/p&gt;
+
+&lt;h3 id="reducers"&gt;Reducers&lt;/h3&gt;
+
+&lt;p&gt;We'll write out a single reducer that will manipulate the application state based on our &lt;code&gt;SEND_FLASH_MESSAGE&lt;/code&gt; action.&lt;/p&gt;
+
+&lt;p&gt;We placed all of our reducer logic inside a single &lt;code&gt;reducers&lt;/code&gt; directory split up by roughly by component.  Our directory structure will look as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;reducers  
+└── flash_message
+    ├── flash_message_reducer.ts
+    ├── flash_message_selectors.ts
+    ├── flash_message_state.interface.ts
+    └── index.ts
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I'll walk through the structure and responsibility of each file in turn.  &lt;/p&gt;
+
+&lt;h6 id="reducerinterface"&gt;Reducer Interface&lt;/h6&gt;
+
+&lt;p&gt;We'll first define the structure of the subsection of the root state the flash message reducer deals with.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// flash_message_state.interface.ts
+
+import { FlashMessage } from '../../interfaces/flash_message.interface';
+
+export interface FlashMessageState {  
+    flashMessage: FlashMessage;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;These subsections of the root state will be defined for each reducer section and collated into a single &lt;code&gt;RootState&lt;/code&gt; interface.&lt;/p&gt;
+
+&lt;p&gt;Next, we'll create our reducer making use of some helper functions to maintain strong typing.&lt;/p&gt;
+
+&lt;h6 id="reducerlogic"&gt;Reducer Logic&lt;/h6&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// flash_message_reducer.ts
+
+import { FlashMessageState } from './flash_message_state.interface';  
+import flashMessageActionTypes from '../../actions/user_buttons/action_types';  
+import { createActionHandler, createReducer } from '../../utils/redux';
+
+const handleAction = createActionHandler&amp;lt;FlashMessageState&amp;gt;();
+
+const handleFlashMessageSent = handleAction(flashMessageActionTypes.SEND_FLASH_MESSAGE, (state, action) =&amp;gt; {  
+    const { message, color } = action.payload;
+    return Object.assign({}, state, {
+        flashMessage: {
+            message,
+            color
+        }
+    });
+});
+
+const initialState: FlashMessageState = {flashMessage: {message: '', color: ''}};
+
+export const flashMessageReducer = createReducer(initialState, [  
+    handleFlashMessageSent
+]);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The first thing we need to do is create a function &lt;code&gt;handleAction&lt;/code&gt; through the &lt;code&gt;createActionHandler&lt;/code&gt; helper function.  &lt;code&gt;createActionHandler&lt;/code&gt; will bind a generic type as the state that the reducer interacts with, in this case &lt;code&gt;FlashMessageState&lt;/code&gt;.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// actionUtils.ts
+...
+export function createActionHandler&amp;lt;TState&amp;gt;() {  
+  return &amp;lt;TPayload&amp;gt;(actionType: ActionType&amp;lt;TPayload&amp;gt;, handler: ActionHandler&amp;lt;TState, TPayload&amp;gt;): TypedActionHandler&amp;lt;TState, TPayload&amp;gt; =&amp;gt; {
+    return Object.assign(handler, { actionType: actionType.toString() });
+  };
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;handleAction&lt;/code&gt; function that is returned, takes the action type we're listening for, imported from our map created earlier, and the reducer handler function which contains the reducer logic.  &lt;code&gt;handleAction&lt;/code&gt; will return a new object with a &lt;code&gt;handler&lt;/code&gt; property corresponding to the handler function and an &lt;code&gt;actionType&lt;/code&gt; property which is the string constant to trigger that reducer logic.  &lt;/p&gt;
+
+&lt;p&gt;This function is essential for maintaining the proper typing for the both the state and the action payload.  The handler function is now properly bound to the state type passed in through the &lt;code&gt;createActionHandler&lt;/code&gt; function, and the payload type it can expect through the action type argument.  In our case, &lt;code&gt;&amp;lt;TState&amp;gt;&lt;/code&gt; is bound to &lt;code&gt;FlashMessageState&lt;/code&gt; type after invoking &lt;code&gt;createActionHandler&lt;/code&gt;, and &lt;code&gt;&amp;lt;TPayload&amp;gt;&lt;/code&gt; is inferred as &lt;code&gt;&amp;lt;FlashMessage&amp;gt;&lt;/code&gt; after passing in &lt;code&gt;flashMessageActionTypes.SEND_FLASH_MESSAGE&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Once we have our reducer function, &lt;code&gt;handleFlashMessageSent&lt;/code&gt;, we will pass it to our &lt;code&gt;createReducer&lt;/code&gt; utility function.  &lt;/p&gt;
+
+&lt;p&gt;In addition to handling initial state, &lt;code&gt;createReducer&lt;/code&gt; will create a closure around an object variable mapping each of the passed handler's &lt;code&gt;actionType&lt;/code&gt; property as a key and each &lt;code&gt;handler&lt;/code&gt; function as the value.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// reducerUtils.ts
+
+import { Action, Reducer, TypedActionHandler, TypedActionHandlerMap } from './';
+
+interface GetInitialState&amp;lt;T&amp;gt; {  
+    (): T;
+}
+
+export function createReducer&amp;lt;TState&amp;gt;(initialState: TState|GetInitialState&amp;lt;TState&amp;gt;, handlers: TypedActionHandler&amp;lt;TState, any&amp;gt;[]): Reducer&amp;lt;TState&amp;gt; {
+
+  const handlerMap = handlers.reduce((acc, handler) =&amp;gt; {
+    return Object.assign(acc, { [handler.actionType]: handler });
+  }, {} as TypedActionHandlerMap&amp;lt;TState&amp;gt;);
+
+  const getInitialState = typeof initialState === 'function' ? initialState : () =&amp;gt; initialState;
+
+  return (state: TState, action: Action&amp;lt;any&amp;gt;) =&amp;gt; {
+    if (typeof state === 'undefined') {
+      state = getInitialState();
+    }
+
+    const handler = handlerMap[action.type];
+    return handler ? handler(state, action) : state;
+  };
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The function &lt;code&gt;createReducer&lt;/code&gt; returns, then references the passed in action type and invokes the given handler passing in the current state.  All handlers will be composed using this function as a single reducer, and they will in turn be exported and collated into the root reducer.&lt;/p&gt;
+
+&lt;h6 id="reducerselectors"&gt;Reducer Selectors&lt;/h6&gt;
+
+&lt;p&gt;For each reducer, we'll create a set of selectors which we can use to get access to specific data on the state.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// flash_message_selectors.ts
+
+import { createStateSelector } from '../../utils/redux';
+
+export const getFlashMessage = createStateSelector(state =&amp;gt; state.flashMessage);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We'll import the &lt;code&gt;createStateSelector&lt;/code&gt; helper function which will use the &lt;code&gt;reselect&lt;/code&gt; library and add some typings.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// selectorUtils.ts
+
+import { createSelector } from 'reselect';  
+import { SelectorWithoutProps } from './reduxTypes';
+
+export function createStateSelector&amp;lt;TResults&amp;gt;(selector: SelectorWithoutProps&amp;lt;TResults&amp;gt;): SelectorWithoutProps&amp;lt;TResults&amp;gt; {  
+  return selector;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h6 id="createstore"&gt;CreateStore&lt;/h6&gt;
+
+&lt;p&gt;Once we have all our reducers set up, we'll import them into a &lt;code&gt;createStore&lt;/code&gt; function which will combine them together along with our root state and any middleware, and create a store which we can pass to our Provider.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// createStore.ts
+
+import * as Redux from 'redux';  
+import thunk from 'redux-thunk';  
+import { Dispatch, RootState } from '../utils/redux';  
+import { flashMessageReducer, stateKey as flashMessageStateKey } from '../reducers/flash_message';
+
+const rootReducer = Redux.combineReducers&amp;lt;RootState&amp;gt;({  
+    [flashMessageStateKey]: flashMessageReducer
+});
+
+export interface Store extends Redux.Store&amp;lt;RootState&amp;gt;{  
+    dispatch: Dispatch;
+};
+
+export default (initialState = {}) =&amp;gt; {  
+    const middleWare = Redux.applyMiddleware(thunk);
+    return Redux.createStore&amp;lt;RootState&amp;gt;(rootReducer, initialState as RootState, middleWare);
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;createStore&lt;/code&gt; will bring in all reducers, in this case just the &lt;code&gt;flashMessageReducer&lt;/code&gt;, and map them by a &lt;code&gt;stateKey&lt;/code&gt; value which is exported from each reducer's &lt;code&gt;index.ts&lt;/code&gt; file.  &lt;code&gt;createStore&lt;/code&gt; will also reference the &lt;code&gt;RootState&lt;/code&gt; interface where we'll define the structure of our application state.  Each key in the Root State object should map to the &lt;code&gt;stateKey&lt;/code&gt; value for each reducer.  In our example, the state key for the flash message reducer is the string &lt;code&gt;'flashMessage'&lt;/code&gt; the same key on Root State that this reducer is responsible for.  As more reducers and pieces of state are added, the Root State will expand.  This will give us a single source of truth to reference the structure of our application state.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// rootState.ts
+
+import { FlashMessageState } from '../../reducers/flash_message';
+
+export interface RootState {  
+    flashMessage: FlashMessageState;
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id="wiringupcomponents"&gt;Wiring Up Components&lt;/h3&gt;
+
+&lt;p&gt;Linking typed state and action creators to the components works very much the same way as it does in plain old javascript Redux. Of our two components &lt;code&gt;flash_message.tsx&lt;/code&gt; will be concerned with displaying a state property, and &lt;code&gt;user_buttons.tsx&lt;/code&gt; will dispatch our action.  &lt;/p&gt;
+
+&lt;p&gt;The third party typings files available for React/Redux do most of the Typescript work for us.  We need to pass component property interfaces into two places.  The first place, when we declare the component, we'll need to pass in an intersection type of a composition of the component's own props, the Redux state props it listens to, and the Redux dispatch props.  The second place we need to pass interfaces in is the &lt;code&gt;connect&lt;/code&gt; Redux function.  &lt;code&gt;connect&lt;/code&gt; takes in three generic type arguments, &lt;code&gt;connect&amp;lt;TStateProps, TDispatchProps, TOwnProps&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Out of the box, we would need to define all these interfaces to mirror the types returned from our &lt;code&gt;mapStateToProps&lt;/code&gt; and &lt;code&gt;mapDispatchToProps&lt;/code&gt; functions.  We can save ourselves some work by using some Typescript type inferencing magic.  The &lt;code&gt;returnType&lt;/code&gt; helper function, when given a function as an argument, will return a &lt;code&gt;null&lt;/code&gt; value given the same type of the passed function's return type.  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// typeUtils.ts
+
+interface Func&amp;lt;T&amp;gt; {  
+    ([...args]: any): T;
+}
+
+export function returnType&amp;lt;T&amp;gt;(func: Func&amp;lt;T&amp;gt;) {  
+    return null as T;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can then use Typescripts obscurely named &lt;code&gt;typeof&lt;/code&gt; operator to access the type of the &lt;code&gt;null&lt;/code&gt; value. In our example, we'll pass in the &lt;code&gt;mapStateToProps&lt;/code&gt; and &lt;code&gt;mapDispatchToProps&lt;/code&gt; functions to &lt;code&gt;returnType&lt;/code&gt; which will automatically infer the type of the Redux state our component is listening to.&lt;/p&gt;
+
+&lt;p&gt;In practice, this is what our &lt;code&gt;flash_message&lt;/code&gt; component will look like.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-typescript"&gt;// flash_message.tsx
+
+import * as React from 'react';  
+import { connect } from 'react-redux';  
+import { getFlashMessage } from '../../reducers/flash_message';  
+import { bindActionCreators, RootState, Dispatch, returnType } from '../../utils/redux';
+
+function mapStateToProps(state: RootState) {  
+    return {
+        flashMessage: getFlashMessage(state)
+    };
+}
+
+interface FlashMessageOwnProps {  
+}
+
+const stateGeneric = returnType(mapStateToProps);  
+type FlashMessageStateProps = typeof stateGeneric;  
+type FlashMessageProps = FlashMessageStateProps &amp;amp; FlashMessageOwnProps;
+
+class FlashMessage extends React.Component&amp;lt;FlashMessageProps, {}&amp;gt; { 
+
+    render() {
+        const { color, message} = this.props.flashMessage.flashMessage;
+
+        return (
+            &amp;lt;p style={{color}}&amp;gt;{message}&amp;lt;/p&amp;gt;
+        );
+    }
+}
+
+export default connect&amp;lt;FlashMessageStateProps, {}, FlashMessageOwnProps&amp;gt;(mapStateToProps)(FlashMessage);  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For the &lt;code&gt;mapStateToProps&lt;/code&gt; function, we'll use a selector function we defined in our reducer directory.&lt;/p&gt;
+
+&lt;p&gt;By using &lt;code&gt;returnType&lt;/code&gt; and Typescript's &lt;code&gt;typeof&lt;/code&gt;, we can inference the return type of &lt;code&gt;mapStateToProps&lt;/code&gt; and can appropriately type our component's props.  The &lt;code&gt;user_buttons&lt;/code&gt; component works much the same way except we're concerned with the &lt;code&gt;mapDispatchToProps&lt;/code&gt; function instead.&lt;/p&gt;
+
+&lt;p&gt;At this point, we have all the typed Redux wired up for our trivial little application.  While Typescript has some initial overhead to get over, we've found it a huge help once our components get more complex.  It gives us a compile time guard against passing in woefully inappropriate data into our action creators and allows us to know exactly what our reducers are going to be dealing with.  With a few essential patterns and utility functions, we can greatly reduce the amount of duplication necessary to keep those actions reducing smoothly.&lt;/p&gt;</content:encoded></item><item><title>Knex Bag O' Functions - Modeling Many to Many Relationships with Node and PostgreSQL</title><description>&lt;p&gt;We began our Node database interactions through the &lt;a href="http://bookshelfjs.org/"&gt;Bookshelf&lt;/a&gt; SQL ORM.  It was good to start out with and helped us quickly get moving.  But, inevitably, as our relations got more complex and our use cases more specific, we had the choice of pushing further into the quagmire of Bookshelf,&lt;/p&gt;</description><link>http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/</link><guid isPermaLink="false">a29b0a64-c5ae-4c33-b47e-00c2aba1177c</guid><category>NodeJS</category><category>PostgreSQL</category><category>Knex</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Fri, 23 Sep 2016 20:19:19 GMT</pubDate><content:encoded>&lt;p&gt;We began our Node database interactions through the &lt;a href="http://bookshelfjs.org/"&gt;Bookshelf&lt;/a&gt; SQL ORM.  It was good to start out with and helped us quickly get moving.  But, inevitably, as our relations got more complex and our use cases more specific, we had the choice of pushing further into the quagmire of Bookshelf, or to cut it loose.  As apparently &lt;a href="https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/"&gt;ORMs are the CS equivalent of the Vietnam War&lt;/a&gt;, we made the choice to cut it loose.&lt;/p&gt;
+
+&lt;p&gt;This post will briefly go through our reasoning on creating a new pattern as well as a code example of how the pattern works.  If you only want to look at the code, &lt;a href="https://github.com/alexzywiak/knexBag"&gt;check it out on github here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, the &lt;a href="http://knexjs.org/"&gt;KnexJS&lt;/a&gt; library is a happy medium between the often heavy handed Bookshelf and scrapping out raw SQL strings until you loose your mind.  Bookshelf is built on top of Knex which is a query builder that closely resembles raw SQL statements.  If you know SQL and you know Javascript, you're well on your way to understanding everything there is in Knex.&lt;/p&gt;
+
+&lt;p&gt;The pattern we establish was coined as a 'Bag of Functions' with one bag roughly correlating to each type of entry we had on our DB.  The functions in these proverbial bags would be generic and composable and would handle all of the DB interaction.  These functions would in turn be imported into our controllers which would combine them to make digital magic happen.&lt;/p&gt;
+
+&lt;p&gt;This pattern worked well for us for two primary reasons: easy learning curve, and separation of concerns.  As mentioned before, Knex is straight forward if you understand SQL, which many of us do, whereas Bookshelf is only straightforward if you understand Bookshelf, which few of us do.  The bag of functions helped us separate out concerns as well.  With Bookshelf, we inadvisably exposed the Bookshelf models throughout our controllers so the DB logic quickly metastasized itself into many places it didn't belong.  By containing all the DB functionality in the bag of functions, the controllers can be kept agnostic of what's happening behind the scenes.&lt;/p&gt;
+
+&lt;p&gt;As I always find code samples much more elucidating than my wordy ramblings, I'll outline an example of how to model some basic CRUD functions for a many to many relationship using the Bag of Functions pattern.&lt;/p&gt;
+
+&lt;h5 id="knexsetup"&gt;Knex Setup&lt;/h5&gt;
+
+&lt;p&gt;I'll gloss over the setup for knex.  If you'd like a walkthrough on how to connect Knex and set up migrations, checkout &lt;a href="https://alexzywiak.github.io/running-migrations-with-knex/index.html"&gt;this post&lt;/a&gt;.  Likewise, take a look at the example &lt;a href="https://github.com/alexzywiak/knexBag/blob/master/knexfile.js"&gt;code repo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;For the purposes of our example, we'll use a fairly trivial example of a many to many relationship, in this case between &lt;code&gt;posts&lt;/code&gt; and &lt;code&gt;categories&lt;/code&gt;.  We'll use Knex migrations to set up a table for each as well as a join table.&lt;/p&gt;
+
+&lt;h6 id="migrations"&gt;Migrations&lt;/h6&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;exports.up = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.createTable('posts', function(table){
+      table.increments('id').primary();
+      table.string('title');
+    }),
+    knex.schema.createTable('categories_posts', function(table){
+      table.increments('id').primary();
+      table.integer('post_id').references('posts.id');
+      table.integer('category_id').references('categories.id');
+    }),
+    knex.schema.createTable('categories', function(table){
+      table.increments('id').primary();
+      table.string('title');
+    })
+  ]);
+};
+
+exports.down = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.dropTable('posts'),
+    knex.schema.dropTable('categories_posts'),
+    knex.schema.dropTable('category_id')
+  ]);
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;After setting up the migration and a &lt;code&gt;knexfile&lt;/code&gt;, create a &lt;code&gt;db.js&lt;/code&gt; file in the root directory which will export our db connection pool.  I also like to expose a &lt;code&gt;TABLES&lt;/code&gt; object which holds onto the string name values of the tables we're interacting with.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;const knex = require('knex');  
+const environment = 'development'  
+const config = require('./knexfile');
+
+exports.db = knex(config[environment]);
+
+exports.TABLES =  {  
+    CATEGORIES: 'categories',
+    POSTS: 'posts',
+    CATEGORIES_POSTS: 'categories_posts'
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h6 id="filestructure"&gt;File Structure&lt;/h6&gt;
+
+&lt;p&gt;Our project code will be split primarily into &lt;code&gt;controllers&lt;/code&gt; and &lt;code&gt;models&lt;/code&gt; directories.  We will have a model file for each type of entry we are dealing with, in this case &lt;code&gt;posts&lt;/code&gt; and &lt;code&gt;categories&lt;/code&gt;.  We'll only have a single controller file, more as an illustration as to how to tie the model function bags together.&lt;/p&gt;
+
+&lt;p&gt;Here's the layout of the project.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;├── controllers
+│   └── post_controller.js
+├── db.js
+├── knexfile.js
+├── migrations
+│   └── 20160911120323_post_categories.js
+├── models
+│   ├── categories.js
+│   └── posts.js
+├── package.json
+└── test
+    ├── models_spec.js
+    └── post_controller_spec.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h5 id="bagsoffunctions"&gt;Bags of Functions&lt;/h5&gt;
+
+&lt;p&gt;The crux of the code will be in the models files.  These are the proverbial 'bags'.  Whenever we need some functionality interacting with the database, we'll add in a function here.  Preferably, composing earlier functions to make our lives even easier.&lt;/p&gt;
+
+&lt;h6 id="creationfunctions"&gt;Creation Functions&lt;/h6&gt;
+
+&lt;p&gt;These functions simply take in a value and save the appropriate entry to the database.&lt;/p&gt;
+
+&lt;p&gt;For posts:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// models/posts.js
+
+const { db, TABLES } = require('../db');
+
+// create post
+exports.createPost = title =&amp;gt; {  
+    return db.insert({ title }).into(TABLES.POSTS).returning('*');
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For categories:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// models/categories.js
+
+const { db, TABLES } = require('../db');
+
+// create category
+exports.createCategory = title =&amp;gt; {  
+    return db.insert({ title }).into(TABLES.CATEGORIES).returning('*');
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All well and good, but we need a way to connect the two together to get all that SQL relationy goodness.  Where there could be an argument for creating a separate model file for the join table, I opted for placing all the relational logic into &lt;code&gt;posts.js&lt;/code&gt; as it could be seen as the more important of the two.  The cross table logic could run you into some circular dependency issues, so make sure you decide where that logic should live and stick with it.&lt;/p&gt;
+
+&lt;p&gt;Our attach function will take an id for both the category and the post that it will be attached to and create the appropriate entry on the join table.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;...// models/posts.js
+
+// attach category to post
+exports.attachPostCategory = (postId, categoryId) =&amp;gt; {  
+    return db.insert({ post_id: postId, category_id: categoryId }).into(TABLES.CATEGORIES_POSTS).returning('*');
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And what kind of developers would we be if we didn't have any tests?  We'll create &lt;code&gt;test/models_spec.js&lt;/code&gt; to make sure that we're doing what we hope.  Make sure you have &lt;code&gt;mocha&lt;/code&gt; and &lt;code&gt;chai&lt;/code&gt; installed as dev dependencies!&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// test/models_spec.js
+
+const { assert } = require('chai');  
+const { db, TABLES } = require('../db');  
+const posts = require('../models/posts');  
+const categories = require('../models/categories');
+
+const categoryTitle = 'new category';  
+const postTitle = 'new post';
+
+describe('db models', () =&amp;gt; {
+
+    afterEach(() =&amp;gt; {
+        return db(TABLES.CATEGORIES_POSTS).del()
+            .then(() =&amp;gt; db(TABLES.CATEGORIES).del())
+            .then(() =&amp;gt; db(TABLES.POSTS).del());
+    });
+
+    it('creates a new post', () =&amp;gt; {
+        return posts.createPost(postTitle)
+            .then(([result]) =&amp;gt; {
+                assert.equal(result.title, postTitle);
+                return db.select('*').from(TABLES.POSTS);
+            }).then(([result]) =&amp;gt; {
+                assert.equal(result.title, postTitle);
+            });
+    });
+
+    it('creates a new category', () =&amp;gt; {
+        return categories.createCategory(categoryTitle)
+            .then(([result]) =&amp;gt; {
+                assert.equal(result.title, categoryTitle);
+                return db.select('*').from(TABLES.CATEGORIES);
+            }).then(([result]) =&amp;gt; {
+                assert.equal(result.title, categoryTitle);
+            });
+    });
+
+    describe('posts and categories', () =&amp;gt; {
+        let postId;
+        let categoryId;
+
+        beforeEach(() =&amp;gt; {
+            return categories.createCategory(categoryTitle)
+                .then(([category]) =&amp;gt; {
+                    categoryId = category.id;
+                    return posts.createPost(postTitle);
+                }).then(([post]) =&amp;gt; postId = post.id);
+        });
+
+        it('attaches a post and a category', () =&amp;gt; {
+            return posts.attachPostCategory(postId, categoryId)
+                .then(() =&amp;gt; {
+                    return db.select('*').from(TABLES.CATEGORIES_POSTS).where({
+                        post_id: postId,
+                        category_id: categoryId
+                    });
+                }).then(result =&amp;gt; assert.equal(result.length, 1));
+        });
+    });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h6 id="lookupqueries"&gt;Look Up Queries&lt;/h6&gt;
+
+&lt;p&gt;Once we write out creation functions, we'll have to set up ways to find what we've saved.  In our implementation, we're going to want to look up lists of categories on our database.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;exports.getCategoriesByTitleList = titleList =&amp;gt; {  
+    return db.select('*').from(TABLES.CATEGORIES).whereIn('title', titleList);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We'll save the joining for the posts.  Here, we're going to want to find a post by its id, populated with all of its associated categories.  The knex query will look like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// models/posts.js
+
+exports.getPostCategoriesById = id =&amp;gt; {  
+    return db.select(`${TABLES.POSTS}.*`, `${TABLES.CATEGORIES}.title as category_title`)
+        .from(TABLES.POSTS)
+        .leftJoin(TABLES.CATEGORIES_POSTS, `${TABLES.CATEGORIES_POSTS}.post_id`, `${TABLES.POSTS}.id`)
+        .leftJoin(TABLES.CATEGORIES, `${TABLES.CATEGORIES_POSTS}.category_id`, `${TABLES.CATEGORIES}.id`)
+        .where(`${TABLES.POSTS}.id`, id);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is all well and good, but it doesn't give us a nice object format.  It will return us an array with one item for each category which so we'll add in some data formatting here as well to make it useful.  We want a single object representing the post with a categories property with an array of all associated categories.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// models/posts.js
+
+// query post with categories
+exports.getPostCategoriesById = id =&amp;gt; {  
+    return db.select(`${TABLES.POSTS}.*`, `${TABLES.CATEGORIES}.title as category_title`)
+        .from(TABLES.POSTS)
+        .leftJoin(TABLES.CATEGORIES_POSTS, `${TABLES.CATEGORIES_POSTS}.post_id`, `${TABLES.POSTS}.id`)
+        .leftJoin(TABLES.CATEGORIES, `${TABLES.CATEGORIES_POSTS}.category_id`, `${TABLES.CATEGORIES}.id`)
+        .where(`${TABLES.POSTS}.id`, id)
+        .then(results =&amp;gt; {
+            return results.reduce((memo, categoryEntry) =&amp;gt; {
+                if (!memo.title){
+                    memo.title = categoryEntry.title;
+                }
+                if (!memo.categories) {
+                    memo.categories = [];
+                }
+                memo.categories.push(categoryEntry.category_title);
+                return memo;
+            }, {});
+        });
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And of course, just to make sure it works.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// test/models_spec.js
+
+...
+it('gets a post with all associated categories', () =&amp;gt; {  
+    return posts.attachPostCategory(postId, categoryId)
+        .then(() =&amp;gt; posts.getPostCategoriesById(postId))
+        .then((result) =&amp;gt; {
+            assert.equal(result.title, postTitle);
+            assert.deepEqual(result.categories, [categoryTitle]);
+    });
+});
+...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h5 id="controllers"&gt;Controllers&lt;/h5&gt;
+
+&lt;p&gt;So we have all these sweet model bags of functions, but a lot of good they do if we don't have something to use them.  Controllers would handle most of the business logic of our server, but would never directly connect with the database.  They would instead compose our model methods.  For our example here, we'll mimic the use case where a user create a post along with a string list of all categories the post should be associated with.  Our controller will handle this in a few steps.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Find all categories in the list that already exist&lt;/li&gt;
+&lt;li&gt;Create any categories in the list that don't already exist on our DB.&lt;/li&gt;
+&lt;li&gt;Create a post&lt;/li&gt;
+&lt;li&gt;Associate the post with all of the category entries on the db&lt;/li&gt;
+&lt;li&gt;Return a formatted representation of our post populated with categories.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Fortunately, we have functions that deal with all of these steps.  We just need to require them in, and compose them together.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// controllers/post_controller.js
+
+const posts = require('../models/posts');  
+const categories = require('../models/categories');
+
+exports.createPostWithCategories = (postTitle, categoryTitles) =&amp;gt; {  
+    let persistedCategories;
+    let persistedPost;
+    return categories.getCategoriesByTitleList(categoryTitles)
+        .then(existingCategories =&amp;gt; {
+            persistedCategories = existingCategories;
+            const unpersistedCategories = categoryTitles.filter(category =&amp;gt; persistedCategories.map(p =&amp;gt; p.title).indexOf(category) === -1);
+            return Promise.all(unpersistedCategories.map(category =&amp;gt; {
+                return categories.createCategory(category);
+            }));
+        }).then(([newCategories]) =&amp;gt; {
+            persistedCategories = persistedCategories.concat(newCategories);
+            return posts.createPost(postTitle);
+        }).then(([newPost]) =&amp;gt; {
+            persistedPost = newPost;
+            return Promise.all(persistedCategories.map(category =&amp;gt; {
+                return posts.attachPostCategory(persistedPost.id, category.id);
+            }));
+        }).then(results =&amp;gt; {
+            return posts.getPostCategoriesById(persistedPost.id);
+        });
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And a test:  &lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;// test/post_controller_spec.js
+
+const { assert } = require('chai');  
+const { db, TABLES } = require('../db');  
+const posts = require('../models/posts');  
+const categories = require('../models/categories');  
+const controller = require('../controllers/post_controller');
+
+const categoryTitle = 'new category';  
+const postTitle = 'new post';
+
+describe('db controller', () =&amp;gt; {  
+    let postId;
+    let categoryId;
+
+    beforeEach(() =&amp;gt; {
+        return categories.createCategory(categoryTitle)
+            .then(([category]) =&amp;gt; {
+                categoryId = category.id;
+                return posts.createPost(postTitle);
+            }).then(([post]) =&amp;gt; postId = post.id);
+    });
+
+    afterEach(() =&amp;gt; {
+        return db(TABLES.CATEGORIES_POSTS).del()
+            .then(() =&amp;gt; db(TABLES.CATEGORIES).del())
+            .then(() =&amp;gt; db(TABLES.POSTS).del());
+    });
+
+    it('creates a post associated with a list of categories', () =&amp;gt; {
+        const newPostTitle = 'second post';
+        const newCategoryTitle = 'second category';
+        const categories = [categoryTitle, newCategoryTitle];
+
+        return controller.createPostWithCategories(newPostTitle, categories)
+            .then((result) =&amp;gt; {
+                assert.equal(result.title, newPostTitle);
+                assert.deepEqual(result.categories, categories);
+                return db.select('*').from(TABLES.CATEGORIES).where('title', categoryTitle);
+            }).then(results =&amp;gt; {
+                assert.equal(results.length, 1);
+            });
+    });
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We were very satisfied with our decision to pull out Bookshelf and replace it with a bag of Knex functions.  While we had to write out some functionality that Bookshelf provided out of the box, we had significantly more flexibility in how we access and formatted data.  Our controllers were much cleaner as they were able to outsource all of the DB heavy lifting to external functions.  In the end, the pattern proved intuitive, flexible and easily accessible by our developers and helped us create a maintainable and powerful backend.&lt;/p&gt;</content:encoded></item><item><title>Writing Typescript Typings Files for Third Party Modules</title><description>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
+
+&lt;p&gt;One of the snag points&lt;/p&gt;</description><link>http://localhost:2368/writing-typescript-typings-files-for-third-party-modules/</link><guid isPermaLink="false">d669282c-ea12-4f57-baf5-d4fb0a521c8d</guid><category>Typescript</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Wed, 31 Aug 2016 23:40:02 GMT</pubDate><content:encoded>&lt;p&gt;&lt;a href="https://www.typescriptlang.org/"&gt;Tyespcript&lt;/a&gt; can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a typescript convert for life.  Unfortunately, during the early stages of a project  typing all the things can seem like ponderous overhead designed to ruin your life.  &lt;/p&gt;
 
 &lt;p&gt;One of the snag points I ran into was bringing in third party modules.  The vast majority of common npm modules already have high quality typings files which you can manage through &lt;a href="https://www.npmjs.com/package/typings"&gt;typings&lt;/a&gt;, but inevitably you'll run into that necessary little package that doesn't have the typings you need.&lt;/p&gt;
 
@@ -2194,325 +2885,4 @@ var client = s3.createClient({
 &amp;lt;/html&amp;gt;  
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;So there it is!  A quick way to stream audio samples down from S3.  Full code is right &lt;a href="https://github.com/alexzywiak/s3StreamExample"&gt;here&lt;/a&gt;.&lt;/p&gt;</content:encoded></item><item><title>Best of Both Worlds: Modelling Relational Data With Mongoose</title><description>&lt;p&gt;The relational debate rages on.  On the relational side of things, you have single sources of truth, all the joins you could possibly want, and fast queries on everything you could possibly imagine. Then you got the rebels tossing around POJOs and rapidly iterating the super loose tables.  What is&lt;/p&gt;</description><link>http://localhost:2368/best-of-both-worlds-modelling-relational-data-with-mongoose/</link><guid isPermaLink="false">3ca79ea9-2298-4635-88e4-318d59778625</guid><category>Express</category><category>MongoDB</category><category>Mongoose</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Sat, 12 Dec 2015 22:13:42 GMT</pubDate><content:encoded>&lt;p&gt;The relational debate rages on.  On the relational side of things, you have single sources of truth, all the joins you could possibly want, and fast queries on everything you could possibly imagine. Then you got the rebels tossing around POJOs and rapidly iterating the super loose tables.  What is a dev to do?&lt;/p&gt;
-
-&lt;p&gt;I was working on a project where we were modelling some highly related data using MongoDB, projects as parts of an organization, and we came up against the inevitable existential question, to embed or not to embed?&lt;/p&gt;
-
-&lt;p&gt;Embedding documents keeps everything in one place and makes all relevant data easily accessible with a single query.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;//Organizations - Embedded
-{
-  name: 'Organization',
-  projects: [{name: 'project1'}, {name:'project2'}]
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Creating separate collections means we have only one source of truth to make updates on and we can easily access any piece of the hierarchy.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;//Organizations - Separate Collections
-{
-  name: 'Organization',
-  projects: [project1._id, project2._id]
-}
-// Projects collection
-{
-  name: 'Project1'
-}
-{
-  name: 'Project2'
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;We ended up choosing to separate out the collections.  There was too much overlap between different documents; if you updated one sub document, you had to make sure it was updated everywhere.  And it proved very difficult to make complex queries and operations on sub documents.  That being said, how can you conveniently link related documents together in MongoDB?&lt;/p&gt;
-
-&lt;p&gt;The solution I ended up using was to create separate collections using Mongoose &lt;a href="http://mongoosejs.com/docs/2.7.x/docs/populate.html"&gt;DB-refs&lt;/a&gt; to link related documents on different collections, and then creating a middleware function to auto-populate the documents with their db-refs on any query.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;DB-refs&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;DB-refs essentially save a reference to an _id property for one or many other documents that are related to the current document.  From the Mongoose docs:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;var StorySchema = new Schema({  
-    _creator : { type: Schema.ObjectId, ref: 'Person' }
-  , title    : String
-  , fans     : [{ type: Schema.ObjectId, ref: 'Person' }]
-});
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The story schema can be linked to a single _creator document and any number of fan documents.  These references will be saved in the &lt;code&gt;_creator&lt;/code&gt; and &lt;code&gt;fans&lt;/code&gt; properties respectively.  To set up these connections, you only need to save the corresponding _id value in _creator.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;var aaron = new Person({ name: 'Aaron', age: 100 });
-
-aaron.save(function (err) {  
-  if (err) ...
-
-  var story1 = new Story({
-      title: "A man who cooked Nintendo"
-    , _creator: aaron._id
-  });
-
-  story1.save(function (err) {
-    if (err) ...
-  });
-})
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Now the story document has a reference to 'aaron', its creator.  To get access to this document, you can 'populate' it to fill in all the DB-ref fields with the documents that they actually reference.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;Story  
-.findOne({ title: /Nintendo/i })
-.populate('_creator', ['name']) // &amp;lt;-- only return the Persons name
-.exec(function (err, story) {
-  if (err) ..
-
-  console.log('The creator is %s', story._creator.name);
-  // prints "The creator is Aaron"
-
-  console.log('The creators age is %s', story._creator.age)
-  // prints "The creators age is null'
-})
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Now this is all well and good, but you have to set up the query to populate.  And what if you have multiple fields you want to populate?  And what if you want to do it all the time?  It would be pain in the ass to have to include populate on every single query you write out, so we'll ship it off to Mongoose middleware to do it each time for us.&lt;/p&gt;
-
-&lt;p&gt;Shifting gears away from the stories a little, in my recent project we had a users schema that held references to organizations, projects, and tasks all of which were separate collections in their own right.&lt;/p&gt;
-
-&lt;p&gt;Here's what our user schema looked like:  &lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;var usersSchema = new Schema({  
-  username: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  organization: [{
-    type: Schema.ObjectId,
-    ref: 'Org'
-  }],
-  project_list: [{
-    type: Schema.ObjectId,
-    ref: 'Project'
-  }],
-  task_list: [{
-    type: Schema.ObjectId,
-    ref: 'Task'
-  }]
-});
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;It would be nice, no matter when you grabbed a user from the DB, it had all of those fields automatically populated, right?&lt;/p&gt;
-
-&lt;p&gt;On defining the model, you can hook into the Mongoose middleware, specifically the 'init' hook which will get fired whenever an existing model is grabbed from the DB.  Inside of the users' model definition, I added in this hook.  It makes use of the Mongoose Model's populate method.  You can pass a space delimited string of all the fields you want to populate.  Any time a user model is picked up, it will have each of those DB-ref fields filled out.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;db.usersSchema.pre('init', function(next, data) {  
-  User.populate(data, {
-    path: 'organization project_list task_list'
-  }, function(err, user) {
-    data = user;
-    next();
-  });
-});
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;I found this solution to work quite nicely with what we were trying to achieve.  We maintained separate, highly related collections.  Each collection was easy to access and update, and there was only one source of truth for each entry.  We also got access to the convenience and intuitive structure of POJOs automatically built for us with every query!  A nice little solution that gave us the best of both worlds.&lt;/p&gt;</content:encoded></item><item><title>Getting a Written Transcript for a Youtube Video Using IBM Watson</title><description>&lt;p&gt;I will go through a quick script that will download audio from a Youtube video and then send it off to the IBM Watson speech to text service to get a written transcript.&lt;/p&gt;
-
-&lt;p&gt;If you're the impatient type, here's the complete code. &lt;br&gt;
-&lt;a href="https://github.com/alexzywiak/youtube-transcriber"&gt;youtube-transcriber&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Set Up&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;To illustrate, I'm going to&lt;/p&gt;</description><link>http://localhost:2368/getting-a-written-transcript-for-a-youtube-video-using-ibm-watson-2/</link><guid isPermaLink="false">14731786-1ffb-4b5d-a1b0-2e10b18f8cfd</guid><category>NodeJS</category><category>APIs</category><category>IBM Watson</category><dc:creator>Alex Zywiak</dc:creator><pubDate>Thu, 10 Dec 2015 02:41:10 GMT</pubDate><content:encoded>&lt;p&gt;I will go through a quick script that will download audio from a Youtube video and then send it off to the IBM Watson speech to text service to get a written transcript.&lt;/p&gt;
-
-&lt;p&gt;If you're the impatient type, here's the complete code. &lt;br&gt;
-&lt;a href="https://github.com/alexzywiak/youtube-transcriber"&gt;youtube-transcriber&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Set Up&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;To illustrate, I'm going to create three files.  &lt;code&gt;youtube.js&lt;/code&gt; to handle downloading the audio file, &lt;code&gt;watson.js&lt;/code&gt; to get the transcription from Watson, and &lt;code&gt;index.js&lt;/code&gt; to tie them together.  There are a handful of modules we'll have to prepare, also.&lt;/p&gt;
-
-&lt;p&gt;We're going to use &lt;a href="https://rg3.github.io/youtube-dl/"&gt;youtube-dl&lt;/a&gt; to handle getting the audio for us.  If you have &lt;code&gt;homebrew&lt;/code&gt;, install &lt;code&gt;youtube-dl&lt;/code&gt; by running:&lt;/p&gt;
-
-&lt;pre&gt;brew install youtube-dl&lt;/pre&gt;
-
-&lt;p&gt;We will have to do some audio processing as well.  &lt;code&gt;youtube-dl&lt;/code&gt; can make use of &lt;a href="https://www.ffmpeg.org/"&gt;ffmpeg&lt;/a&gt; to do all its auditory dirty work, so go ahead and install that, too.&lt;/p&gt;
-
-&lt;pre&gt;brew install ffmpeg&lt;/pre&gt;
-
-&lt;p&gt;While we're on the module train, let's prep all the necessary npm packages.&lt;/p&gt;
-
-&lt;pre&gt;npm install bluebird watson-developer-cloud fluent-ffmpeg&lt;/pre&gt;
-
-&lt;p&gt;&lt;strong&gt;Downloading Audio from Youtube&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;To download the audio, we will spawn a node child process to run &lt;code&gt;youtube-dl&lt;/code&gt;.The spawn process does all the work for us.  We pass the URL of the video we want, specify only to grab the audio, set the output to mp3, and set the file name.  I have the file named simply as &lt;code&gt;file.mp3&lt;/code&gt;, but it can be changed to whatever you need.  Check the &lt;a href="https://rg3.github.io/youtube-dl/"&gt;youtube-dl&lt;/a&gt; docs for more details.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;// youtube.js
-var spawn = require('child_process').spawn;  
-var Promise = require('bluebird');  
-var ffmpeg = require('fluent-ffmpeg');  
-var path = require('path');
-
-exports.getYouTubeAudio = function(videoId){  
-    return new Promise(function(resolve, reject){
-      // Install youtube_dl locally: brew install youtube-dl
-    youtube_dl = spawn('youtube-dl', ['--extract-audio', '--audio-format', 'mp3', '-o', 'file.%(ext)s', "http://www.youtube.com/watch?v=" + videoId]);
-
-    youtube_dl.stdout.on('data', function(data){
-      console.log(data.toString());
-    });
-
-    youtube_dl.stderr.on('data', function(data){
-      process.stderr.write(data);
-    });
-
-    // brew install ffmpeg
-    youtube_dl.on('exit', function(){
-      var mp3File = path.join(__dirname, 'file.mp3');
-      var flacFile = path.join(__dirname, 'file.flac')
-      ffmpeg(mp3File)
-        .output(flacFile)
-        .on('end', function(){
-          resolve();
-        })
-        .on('error', function(err){
-          reject(err);
-        })
-        .run();
-    });
-  });
-};
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Of course, Watson takes &lt;code&gt;flac&lt;/code&gt; files, so we'll have to convert our &lt;code&gt;mp3&lt;/code&gt;.  We can use the &lt;code&gt;fluent-ffmpeg&lt;/code&gt; module to take care of this for us.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;    //youtube.js
-    var ffmpeg = require('fluent-ffmpeg);
-...
-    youtube_dl.on('exit', function(){
-      var mp3File = path.join(__dirname, 'file.mp3');
-      var flacFile = path.join(__dirname, 'file.flac')
-      ffmpeg(mp3File)
-        .output(flacFile)
-        .on('end', function(){
-          resolve();
-        })
-        .on('error', function(err){
-          reject(err);
-        })
-        .run();
-    });
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;I've also used Bluebird as a promise library to resolve once the &lt;code&gt;ffmpeg&lt;/code&gt; conversion is complete, so that we can easily chain the download with our next script.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Getting a Transcript from Watson&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;In order to use Watson, you need to head on over to IBM &lt;a href="http://www.ibm.com/cloud-computing/bluemix/?cm_mmc=search-gsn-_-branded-Bluemix-general-_-bmm%20%2Bblue%20%2Bmix%20blue%20mix-_-usa-bm-mkt-oww"&gt;Bluemix&lt;/a&gt; and sign up to get some creds. &lt;/p&gt;
-
-&lt;p&gt;To use Watson in Node, the good folks at IBM were kind enough to create an &lt;a href="https://www.npmjs.com/package/watson-developer-cloud#speech-to-text"&gt;npm module&lt;/a&gt; for us.  So to get connected, include this code.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;// watson.js
-var watson = require('watson-developer-cloud');
-
-var speech_to_text = watson.speech_to_text({  
-  username: &amp;lt;bluemix username&amp;gt;,
-  password: &amp;lt;bluemix password&amp;gt;,
-  version: 'v1',
-  url: 'https://stream.watsonplatform.net/speech-to-text/api',
-});
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;There are a few ways to send and get the transcript from Watson.  I went for streaming as you can send larger files.  As the response is streamed back, we're going to build out a json object and then write it to a file when the transcription stream is done.&lt;/p&gt;
-
-&lt;p&gt;This function will take in the path to the audio file we want to transcribe, &lt;code&gt;file.flac&lt;/code&gt; for our example, and will write the transcript to &lt;code&gt;transcript.json&lt;/code&gt;.  The &lt;code&gt;params&lt;/code&gt; option allows you to specify additional information you want Watson to include.  Here, I asked for timestamps for each word as well as to ignore silence by setting &lt;code&gt;continue&lt;/code&gt; to &lt;code&gt;true&lt;/code&gt;.  If you only want the written transcript, you can stream the output directly into a &lt;code&gt;writeStream&lt;/code&gt; to a text file.  I opted for JSON because I wanted to get at the timestamp objects.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript "&gt;// watson.js
-var watson = require('watson-developer-cloud');  
-var fs = require('fs');  
-var path = require('path');  
-var Promise = require('bluebird');
-
-var speech_to_text = watson.speech_to_text({  
-  username: &amp;lt;bluemix username&amp;gt;,
-  password: &amp;lt;bluemix password&amp;gt;,
-  version: 'v1',
-  url: 'https://stream.watsonplatform.net/speech-to-text/api',
-});
-
-exports.watsonSpeechToText = function(audioFile) {
-
-  return new Promise(function(resolve, reject) {
-
-    var params = {
-      content_type: 'audio/flac',
-      timestamps: true,
-      continuous: true
-    };
-
-    var results = [];
-
-    // create the stream
-    var recognizeStream = speech_to_text.createRecognizeStream(params);
-
-    // pipe in some audio
-    fs.createReadStream(audioFile).pipe(recognizeStream);
-
-    // listen for 'data' events for just the final text
-    // listen for 'results' events to get the raw JSON with interim results, timings, etc.
-
-    recognizeStream.setEncoding('utf8'); // to get strings instead of Buffers from `data` events
-
-    recognizeStream.on('results', function(e) {
-      if (e.results[0].final) {
-        results.push(e);
-      }
-    });
-
-    ['data', 'results', 'error', 'connection-close'].forEach(function(eventName) {
-      recognizeStream.on(eventName, console.log.bind(console, eventName + ' event: '));
-    });
-
-    recognizeStream.on('error', function(err) {
-      util.handleError('Error writing to transcript.json: ' + err);
-    });
-
-    recognizeStream.on('connection-close', function() {
-        var transcriptFile = path.join(__dirname, 'transcript.json');
-
-      fs.writeFile(transcriptFile, JSON.stringify(results), function(err) {
-        if (err) {
-          util.handleError(err);
-        }
-        resolve();
-      });
-    });
-  });
-};
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;All you need to do is chain these functions together and you will have all the transcripted goodness you would want!&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Running the Show&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;index.js&lt;/code&gt; will combine our two modules and allow you to run them using the command line.  As it's set up here, run &lt;code&gt;node index.js transcribe &amp;lt;some video id&amp;gt;&lt;/code&gt; and you're up and running!&lt;/p&gt;
-
-&lt;p&gt;Give this one a try: &lt;code&gt;node index.js transcribe I9VA-U69yaY&lt;/code&gt;  &lt;/p&gt;
-
-&lt;pre&gt;&lt;code class="language-javascript"&gt;// index.js
-var watson = require('./watson');  
-var youtube = require('./youtube');  
-var path = require('path');
-
-var flags = process.argv.slice(2);
-
-if(flags[0] === 'transcribe'){  
-    youtube.getYouTubeAudio(flags[1])
-        .then(watson.watsonSpeechToText.bind(this, path.join(__dirname, 'file.flac')))
-        .then(function(){
-            console.log('Done transcribing video id: ' + flags[1]);
-        });
-}
-&lt;/code&gt;&lt;/pre&gt;</content:encoded></item></channel></rss>
+&lt;p&gt;So there it is!  A quick way to stream audio samples down from S3.  Full code is right &lt;a href="https://github.com/alexzywiak/s3StreamExample"&gt;here&lt;/a&gt;.&lt;/p&gt;</content:encoded></item></channel></rss>

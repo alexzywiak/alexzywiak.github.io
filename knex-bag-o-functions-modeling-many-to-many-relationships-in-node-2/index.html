@@ -1,0 +1,536 @@
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Knex Bag O' Functions - Modeling Many to Many Relationships with Node and PostgreSQL</title>
+    <meta name="description" content="">
+
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=7ff054ed29">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic%7COpen+Sans:700,400">
+    <link rel="stylesheet" type="text/css" href="../assets/css/prism.css?v=7ff054ed29">
+
+    <link rel="canonical" href="index.html">
+    <meta name="referrer" content="origin-when-cross-origin">
+    
+    <meta property="og:site_name" content="Lingua Franca">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Knex Bag O' Functions - Modeling Many to Many Relationships with Node and PostgreSQL">
+    <meta property="og:description" content="We began our Node database interactions through the Bookshelf SQL ORM.  It was good to start out with and helped us quickly get moving.  But, inevitably, as our relations got more complex and our use cases more specific, we had the choice of pushing further into the quagmire of Bookshelf,">
+    <meta property="og:url" content="http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/">
+    <meta property="article:published_time" content="2016-09-23T20:19:19.000Z">
+    <meta property="article:modified_time" content="2016-10-04T18:05:47.000Z">
+    <meta property="article:tag" content="NodeJS">
+    <meta property="article:tag" content="PostgreSQL">
+    <meta property="article:tag" content="Knex">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Knex Bag O' Functions - Modeling Many to Many Relationships with Node and PostgreSQL">
+    <meta name="twitter:description" content="We began our Node database interactions through the Bookshelf SQL ORM.  It was good to start out with and helped us quickly get moving.  But, inevitably, as our relations got more complex and our use cases more specific, we had the choice of pushing further into the quagmire of Bookshelf,">
+    <meta name="twitter:url" content="http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Alex Zywiak">
+    <meta name="twitter:label2" content="Filed under">
+    <meta name="twitter:data2" content="NodeJS, PostgreSQL, Knex">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Lingua Franca",
+        "logo": "http://localhost:2368/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Zywiak",
+        "url": "http://localhost:2368/author/alex/",
+        "sameAs": []
+    },
+    "headline": "Knex Bag O&#x27; Functions - Modeling Many to Many Relationships with Node and PostgreSQL",
+    "url": "http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/",
+    "datePublished": "2016-09-23T20:19:19.000Z",
+    "dateModified": "2016-10-04T18:05:47.000Z",
+    "keywords": "NodeJS, PostgreSQL, Knex",
+    "description": "We began our Node database interactions through the Bookshelf SQL ORM.  It was good to start out with and helped us quickly get moving.  But, inevitably, as our relations got more complex and our use cases more specific, we had the choice of pushing further into the quagmire of Bookshelf,"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.9">
+    <link rel="alternate" type="application/rss+xml" title="Lingua Franca" href="../rss/index.html">
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74247561-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body class="post-template tag-nodejs tag-postgresql tag-knex nav-closed">
+
+    <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="index.html#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+            <li class="nav-home" role="presentation"><a href="../">Home</a></li>
+            <li class="nav-react" role="presentation"><a href="../tag/react/">React</a></li>
+            <li class="nav-angularjs" role="presentation"><a href="../tag/angularjs/">AngularJS</a></li>
+            <li class="nav-nodejs" role="presentation"><a href="../tag/nodejs/">NodeJS</a></li>
+            <li class="nav-testing" role="presentation"><a href="../tag/testing/">Testing</a></li>
+            <li class="nav-digitalocean" role="presentation"><a href="../tag/digitalocean/">DigitalOcean</a></li>
+            <li class="nav-mysql" role="presentation"><a href="../tag/mysql/">MySQL</a></li>
+            <li class="nav-mongodb" role="presentation"><a href="../tag/mongodb/">MongoDB</a></li>
+    </ul>
+        <a class="subscribe-button icon-feed" href="../rss/index.rss">Subscribe</a>
+</div>
+<span class="nav-cover"></span>
+
+
+    <div class="site-wrapper">
+
+        
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        
+            <a class="menu-button icon-menu" href="index.html#"><span class="word">Menu</span></a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+    <article class="post tag-nodejs tag-postgresql tag-knex">
+
+        <header class="post-header">
+            <h1 class="post-title">Knex Bag O' Functions - Modeling Many to Many Relationships with Node and PostgreSQL</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2016-09-23">23 September 2016</time>  on <a href="../tag/nodejs/">NodeJS</a>, <a href="../tag/postgresql/">PostgreSQL</a>, <a href="../tag/knex/">Knex</a>
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p>We began our Node database interactions through the <a href="http://bookshelfjs.org/">Bookshelf</a> SQL ORM.  It was good to start out with and helped us quickly get moving.  But, inevitably, as our relations got more complex and our use cases more specific, we had the choice of pushing further into the quagmire of Bookshelf, or to cut it loose.  As apparently <a href="https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/">ORMs are the CS equivalent of the Vietnam War</a>, we made the choice to cut it loose.</p>
+
+<p>This post will briefly go through our reasoning on creating a new pattern as well as a code example of how the pattern works.  If you only want to look at the code, <a href="https://github.com/alexzywiak/knexBag">check it out on github here</a>.</p>
+
+<p>Fortunately, the <a href="http://knexjs.org/">KnexJS</a> library is a happy medium between the often heavy handed Bookshelf and scrapping out raw SQL strings until you loose your mind.  Bookshelf is built on top of Knex which is a query builder that closely resembles raw SQL statements.  If you know SQL and you know Javascript, you're well on your way to understanding everything there is in Knex.</p>
+
+<p>The pattern we establish was coined as a 'Bag of Functions' with one bag roughly correlating to each type of entry we had on our DB.  The functions in these proverbial bags would be generic and composable and would handle all of the DB interaction.  These functions would in turn be imported into our controllers which would combine them to make digital magic happen.</p>
+
+<p>This pattern worked well for us for two primary reasons: easy learning curve, and separation of concerns.  As mentioned before, Knex is straight forward if you understand SQL, which many of us do, whereas Bookshelf is only straightforward if you understand Bookshelf, which few of us do.  The bag of functions helped us separate out concerns as well.  With Bookshelf, we inadvisably exposed the Bookshelf models throughout our controllers so the DB logic quickly metastasized itself into many places it didn't belong.  By containing all the DB functionality in the bag of functions, the controllers can be kept agnostic of what's happening behind the scenes.</p>
+
+<p>As I always find code samples much more elucidating than my wordy ramblings, I'll outline an example of how to model some basic CRUD functions for a many to many relationship using the Bag of Functions pattern.</p>
+
+<h5 id="knexsetup">Knex Setup</h5>
+
+<p>I'll gloss over the setup for knex.  If you'd like a walkthrough on how to connect Knex and set up migrations, checkout <a href="https://alexzywiak.github.io/running-migrations-with-knex/index.html">this post</a>.  Likewise, take a look at the example <a href="https://github.com/alexzywiak/knexBag/blob/master/knexfile.js">code repo</a>.</p>
+
+<p>For the purposes of our example, we'll use a fairly trivial example of a many to many relationship, in this case between <code>posts</code> and <code>categories</code>.  We'll use Knex migrations to set up a table for each as well as a join table.</p>
+
+<h6 id="migrations">Migrations</h6>
+
+<pre><code class="language-javascript">exports.up = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.createTable('posts', function(table){
+      table.increments('id').primary();
+      table.string('title');
+    }),
+    knex.schema.createTable('categories_posts', function(table){
+      table.increments('id').primary();
+      table.integer('post_id').references('posts.id');
+      table.integer('category_id').references('categories.id');
+    }),
+    knex.schema.createTable('categories', function(table){
+      table.increments('id').primary();
+      table.string('title');
+    })
+  ]);
+};
+
+exports.down = function(knex, Promise) {  
+  return Promise.all([
+    knex.schema.dropTable('posts'),
+    knex.schema.dropTable('categories_posts'),
+    knex.schema.dropTable('category_id')
+  ]);
+};
+</code></pre>
+
+<p>After setting up the migration and a <code>knexfile</code>, create a <code>db.js</code> file in the root directory which will export our db connection pool.  I also like to expose a <code>TABLES</code> object which holds onto the string name values of the tables we're interacting with.</p>
+
+<pre><code class="language-javascript">const knex = require('knex');  
+const environment = 'development'  
+const config = require('./knexfile');
+
+exports.db = knex(config[environment]);
+
+exports.TABLES =  {  
+    CATEGORIES: 'categories',
+    POSTS: 'posts',
+    CATEGORIES_POSTS: 'categories_posts'
+};
+</code></pre>
+
+<h6 id="filestructure">File Structure</h6>
+
+<p>Our project code will be split primarily into <code>controllers</code> and <code>models</code> directories.  We will have a model file for each type of entry we are dealing with, in this case <code>posts</code> and <code>categories</code>.  We'll only have a single controller file, more as an illustration as to how to tie the model function bags together.</p>
+
+<p>Here's the layout of the project.</p>
+
+<pre><code>├── controllers
+│   └── post_controller.js
+├── db.js
+├── knexfile.js
+├── migrations
+│   └── 20160911120323_post_categories.js
+├── models
+│   ├── categories.js
+│   └── posts.js
+├── package.json
+└── test
+    ├── models_spec.js
+    └── post_controller_spec.js
+</code></pre>
+
+<h5 id="bagsoffunctions">Bags of Functions</h5>
+
+<p>The crux of the code will be in the models files.  These are the proverbial 'bags'.  Whenever we need some functionality interacting with the database, we'll add in a function here.  Preferably, composing earlier functions to make our lives even easier.</p>
+
+<h6 id="creationfunctions">Creation Functions</h6>
+
+<p>These functions simply take in a value and save the appropriate entry to the database.</p>
+
+<p>For posts:  </p>
+
+<pre><code class="language-javascript">// models/posts.js
+
+const { db, TABLES } = require('../db');
+
+// create post
+exports.createPost = title =&gt; {  
+    return db.insert({ title }).into(TABLES.POSTS).returning('*');
+};
+</code></pre>
+
+<p>For categories:  </p>
+
+<pre><code class="language-javascript">// models/categories.js
+
+const { db, TABLES } = require('../db');
+
+// create category
+exports.createCategory = title =&gt; {  
+    return db.insert({ title }).into(TABLES.CATEGORIES).returning('*');
+};
+</code></pre>
+
+<p>All well and good, but we need a way to connect the two together to get all that SQL relationy goodness.  Where there could be an argument for creating a separate model file for the join table, I opted for placing all the relational logic into <code>posts.js</code> as it could be seen as the more important of the two.  The cross table logic could run you into some circular dependency issues, so make sure you decide where that logic should live and stick with it.</p>
+
+<p>Our attach function will take an id for both the category and the post that it will be attached to and create the appropriate entry on the join table.</p>
+
+<pre><code class="language-javascript">...// models/posts.js
+
+// attach category to post
+exports.attachPostCategory = (postId, categoryId) =&gt; {  
+    return db.insert({ post_id: postId, category_id: categoryId }).into(TABLES.CATEGORIES_POSTS).returning('*');
+};
+</code></pre>
+
+<p>And what kind of developers would we be if we didn't have any tests?  We'll create <code>test/models_spec.js</code> to make sure that we're doing what we hope.  Make sure you have <code>mocha</code> and <code>chai</code> installed as dev dependencies!</p>
+
+<pre><code class="language-javascript">// test/models_spec.js
+
+const { assert } = require('chai');  
+const { db, TABLES } = require('../db');  
+const posts = require('../models/posts');  
+const categories = require('../models/categories');
+
+const categoryTitle = 'new category';  
+const postTitle = 'new post';
+
+describe('db models', () =&gt; {
+
+    afterEach(() =&gt; {
+        return db(TABLES.CATEGORIES_POSTS).del()
+            .then(() =&gt; db(TABLES.CATEGORIES).del())
+            .then(() =&gt; db(TABLES.POSTS).del());
+    });
+
+    it('creates a new post', () =&gt; {
+        return posts.createPost(postTitle)
+            .then(([result]) =&gt; {
+                assert.equal(result.title, postTitle);
+                return db.select('*').from(TABLES.POSTS);
+            }).then(([result]) =&gt; {
+                assert.equal(result.title, postTitle);
+            });
+    });
+
+    it('creates a new category', () =&gt; {
+        return categories.createCategory(categoryTitle)
+            .then(([result]) =&gt; {
+                assert.equal(result.title, categoryTitle);
+                return db.select('*').from(TABLES.CATEGORIES);
+            }).then(([result]) =&gt; {
+                assert.equal(result.title, categoryTitle);
+            });
+    });
+
+    describe('posts and categories', () =&gt; {
+        let postId;
+        let categoryId;
+
+        beforeEach(() =&gt; {
+            return categories.createCategory(categoryTitle)
+                .then(([category]) =&gt; {
+                    categoryId = category.id;
+                    return posts.createPost(postTitle);
+                }).then(([post]) =&gt; postId = post.id);
+        });
+
+        it('attaches a post and a category', () =&gt; {
+            return posts.attachPostCategory(postId, categoryId)
+                .then(() =&gt; {
+                    return db.select('*').from(TABLES.CATEGORIES_POSTS).where({
+                        post_id: postId,
+                        category_id: categoryId
+                    });
+                }).then(result =&gt; assert.equal(result.length, 1));
+        });
+    });
+});
+</code></pre>
+
+<h6 id="lookupqueries">Look Up Queries</h6>
+
+<p>Once we write out creation functions, we'll have to set up ways to find what we've saved.  In our implementation, we're going to want to look up lists of categories on our database.</p>
+
+<pre><code class="language-javascript">exports.getCategoriesByTitleList = titleList =&gt; {  
+    return db.select('*').from(TABLES.CATEGORIES).whereIn('title', titleList);
+}
+</code></pre>
+
+<p>We'll save the joining for the posts.  Here, we're going to want to find a post by its id, populated with all of its associated categories.  The knex query will look like this:</p>
+
+<pre><code class="language-javascript">// models/posts.js
+
+exports.getPostCategoriesById = id =&gt; {  
+    return db.select(`${TABLES.POSTS}.*`, `${TABLES.CATEGORIES}.title as category_title`)
+        .from(TABLES.POSTS)
+        .leftJoin(TABLES.CATEGORIES_POSTS, `${TABLES.CATEGORIES_POSTS}.post_id`, `${TABLES.POSTS}.id`)
+        .leftJoin(TABLES.CATEGORIES, `${TABLES.CATEGORIES_POSTS}.category_id`, `${TABLES.CATEGORIES}.id`)
+        .where(`${TABLES.POSTS}.id`, id);
+</code></pre>
+
+<p>This is all well and good, but it doesn't give us a nice object format.  It will return us an array with one item for each category which so we'll add in some data formatting here as well to make it useful.  We want a single object representing the post with a categories property with an array of all associated categories.</p>
+
+<pre><code class="language-javascript">// models/posts.js
+
+// query post with categories
+exports.getPostCategoriesById = id =&gt; {  
+    return db.select(`${TABLES.POSTS}.*`, `${TABLES.CATEGORIES}.title as category_title`)
+        .from(TABLES.POSTS)
+        .leftJoin(TABLES.CATEGORIES_POSTS, `${TABLES.CATEGORIES_POSTS}.post_id`, `${TABLES.POSTS}.id`)
+        .leftJoin(TABLES.CATEGORIES, `${TABLES.CATEGORIES_POSTS}.category_id`, `${TABLES.CATEGORIES}.id`)
+        .where(`${TABLES.POSTS}.id`, id)
+        .then(results =&gt; {
+            return results.reduce((memo, categoryEntry) =&gt; {
+                if (!memo.title){
+                    memo.title = categoryEntry.title;
+                }
+                if (!memo.categories) {
+                    memo.categories = [];
+                }
+                memo.categories.push(categoryEntry.category_title);
+                return memo;
+            }, {});
+        });
+};
+</code></pre>
+
+<p>And of course, just to make sure it works.</p>
+
+<pre><code class="language-javascript">// test/models_spec.js
+
+...
+it('gets a post with all associated categories', () =&gt; {  
+    return posts.attachPostCategory(postId, categoryId)
+        .then(() =&gt; posts.getPostCategoriesById(postId))
+        .then((result) =&gt; {
+            assert.equal(result.title, postTitle);
+            assert.deepEqual(result.categories, [categoryTitle]);
+    });
+});
+...
+</code></pre>
+
+<h5 id="controllers">Controllers</h5>
+
+<p>So we have all these sweet model bags of functions, but a lot of good they do if we don't have something to use them.  Controllers would handle most of the business logic of our server, but would never directly connect with the database.  They would instead compose our model methods.  For our example here, we'll mimic the use case where a user create a post along with a string list of all categories the post should be associated with.  Our controller will handle this in a few steps.</p>
+
+<ul>
+<li>Find all categories in the list that already exist</li>
+<li>Create any categories in the list that don't already exist on our DB.</li>
+<li>Create a post</li>
+<li>Associate the post with all of the category entries on the db</li>
+<li>Return a formatted representation of our post populated with categories.</li>
+</ul>
+
+<p>Fortunately, we have functions that deal with all of these steps.  We just need to require them in, and compose them together.</p>
+
+<pre><code class="language-javascript">// controllers/post_controller.js
+
+const posts = require('../models/posts');  
+const categories = require('../models/categories');
+
+exports.createPostWithCategories = (postTitle, categoryTitles) =&gt; {  
+    let persistedCategories;
+    let persistedPost;
+    return categories.getCategoriesByTitleList(categoryTitles)
+        .then(existingCategories =&gt; {
+            persistedCategories = existingCategories;
+            const unpersistedCategories = categoryTitles.filter(category =&gt; persistedCategories.map(p =&gt; p.title).indexOf(category) === -1);
+            return Promise.all(unpersistedCategories.map(category =&gt; {
+                return categories.createCategory(category);
+            }));
+        }).then(([newCategories]) =&gt; {
+            persistedCategories = persistedCategories.concat(newCategories);
+            return posts.createPost(postTitle);
+        }).then(([newPost]) =&gt; {
+            persistedPost = newPost;
+            return Promise.all(persistedCategories.map(category =&gt; {
+                return posts.attachPostCategory(persistedPost.id, category.id);
+            }));
+        }).then(results =&gt; {
+            return posts.getPostCategoriesById(persistedPost.id);
+        });
+};
+</code></pre>
+
+<p>And a test:  </p>
+
+<pre><code class="language-javascript">// test/post_controller_spec.js
+
+const { assert } = require('chai');  
+const { db, TABLES } = require('../db');  
+const posts = require('../models/posts');  
+const categories = require('../models/categories');  
+const controller = require('../controllers/post_controller');
+
+const categoryTitle = 'new category';  
+const postTitle = 'new post';
+
+describe('db controller', () =&gt; {  
+    let postId;
+    let categoryId;
+
+    beforeEach(() =&gt; {
+        return categories.createCategory(categoryTitle)
+            .then(([category]) =&gt; {
+                categoryId = category.id;
+                return posts.createPost(postTitle);
+            }).then(([post]) =&gt; postId = post.id);
+    });
+
+    afterEach(() =&gt; {
+        return db(TABLES.CATEGORIES_POSTS).del()
+            .then(() =&gt; db(TABLES.CATEGORIES).del())
+            .then(() =&gt; db(TABLES.POSTS).del());
+    });
+
+    it('creates a post associated with a list of categories', () =&gt; {
+        const newPostTitle = 'second post';
+        const newCategoryTitle = 'second category';
+        const categories = [categoryTitle, newCategoryTitle];
+
+        return controller.createPostWithCategories(newPostTitle, categories)
+            .then((result) =&gt; {
+                assert.equal(result.title, newPostTitle);
+                assert.deepEqual(result.categories, categories);
+                return db.select('*').from(TABLES.CATEGORIES).where('title', categoryTitle);
+            }).then(results =&gt; {
+                assert.equal(results.length, 1);
+            });
+    });
+});
+</code></pre>
+
+<p>We were very satisfied with our decision to pull out Bookshelf and replace it with a bag of Knex functions.  While we had to write out some functionality that Bookshelf provided out of the box, we had significantly more flexibility in how we access and formatted data.  Our controllers were much cleaner as they were able to outsource all of the DB heavy lifting to external functions.  In the end, the pattern proved intuitive, flexible and easily accessible by our developers and helped us create a maintainable and powerful backend.</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/alex/">Alex Zywiak</a></h4>
+
+                    <p>Read <a href="../author/alex/">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=Knex%20Bag%20O'%20Functions%20-%20Modeling%20Many%20to%20Many%20Relationships%20with%20Node%20and%20PostgreSQL&amp;url=http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+
+        </footer>
+
+    </article>
+</main>
+
+<aside class="read-next">
+    <a class="read-next-story no-cover" href="../react-redux-with-typescript/">
+        <section class="post">
+            <h2>React Redux with Typescript</h2>
+            <p>Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers,…</p>
+        </section>
+    </a>
+    <a class="read-next-story prev no-cover" href="../writing-typescript-typings-files-for-third-party-modules/">
+        <section class="post">
+            <h2>Writing Typescript Typings Files for Third Party Modules</h2>
+            <p>Tyespcript can bring sanity to your big JS projects.  When the first big refactor comes around, you'll be a…</p>
+        </section>
+    </a>
+</aside>
+
+
+
+        <footer class="site-footer clearfix">
+            <section class="copyright"><a href="../">Lingua Franca</a> © 2016</section>
+            <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+        </footer>
+
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=7ff054ed29"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=7ff054ed29"></script>
+     <script type="text/javascript" src="../assets/js/prism.js?v=7ff054ed29"></script>
+
+</body>

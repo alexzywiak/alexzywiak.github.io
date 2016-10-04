@@ -1,0 +1,529 @@
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>React Redux with Typescript</title>
+    <meta name="description" content="">
+
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=7ff054ed29">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic%7COpen+Sans:700,400">
+    <link rel="stylesheet" type="text/css" href="../assets/css/prism.css?v=7ff054ed29">
+
+    <link rel="canonical" href="index.html">
+    <meta name="referrer" content="origin-when-cross-origin">
+    
+    <meta property="og:site_name" content="Lingua Franca">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="React Redux with Typescript">
+    <meta property="og:description" content="Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers, it is all too easy to lose the structure of the root state and to pass inappropriate data through action payloads.  Typescript adds a compile time guard against falling into reducer">
+    <meta property="og:url" content="http://localhost:2368/react-redux-with-typescript/">
+    <meta property="article:published_time" content="2016-10-04T17:52:51.000Z">
+    <meta property="article:modified_time" content="2016-10-04T18:05:06.000Z">
+    <meta property="article:tag" content="React">
+    <meta property="article:tag" content="Redux">
+    <meta property="article:tag" content="Typescript">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="React Redux with Typescript">
+    <meta name="twitter:description" content="Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers, it is all too easy to lose the structure of the root state and to pass inappropriate data through action payloads.  Typescript adds a compile time guard against falling into reducer">
+    <meta name="twitter:url" content="http://localhost:2368/react-redux-with-typescript/">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Alex Zywiak">
+    <meta name="twitter:label2" content="Filed under">
+    <meta name="twitter:data2" content="React, Redux, Typescript">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Lingua Franca",
+        "logo": "http://localhost:2368/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Alex Zywiak",
+        "url": "http://localhost:2368/author/alex/",
+        "sameAs": []
+    },
+    "headline": "React Redux with Typescript",
+    "url": "http://localhost:2368/react-redux-with-typescript/",
+    "datePublished": "2016-10-04T17:52:51.000Z",
+    "dateModified": "2016-10-04T18:05:06.000Z",
+    "keywords": "React, Redux, Typescript",
+    "description": "Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers, it is all too easy to lose the structure of the root state and to pass inappropriate data through action payloads.  Typescript adds a compile time guard against falling into reducer"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 0.9">
+    <link rel="alternate" type="application/rss+xml" title="Lingua Franca" href="../rss/index.html">
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74247561-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body class="post-template tag-react tag-redux tag-typescript nav-closed">
+
+    <div class="nav">
+    <h3 class="nav-title">Menu</h3>
+    <a href="index.html#" class="nav-close">
+        <span class="hidden">Close</span>
+    </a>
+    <ul>
+            <li class="nav-home" role="presentation"><a href="../">Home</a></li>
+            <li class="nav-react" role="presentation"><a href="../tag/react/">React</a></li>
+            <li class="nav-angularjs" role="presentation"><a href="../tag/angularjs/">AngularJS</a></li>
+            <li class="nav-nodejs" role="presentation"><a href="../tag/nodejs/">NodeJS</a></li>
+            <li class="nav-testing" role="presentation"><a href="../tag/testing/">Testing</a></li>
+            <li class="nav-digitalocean" role="presentation"><a href="../tag/digitalocean/">DigitalOcean</a></li>
+            <li class="nav-mysql" role="presentation"><a href="../tag/mysql/">MySQL</a></li>
+            <li class="nav-mongodb" role="presentation"><a href="../tag/mongodb/">MongoDB</a></li>
+    </ul>
+        <a class="subscribe-button icon-feed" href="../rss/index.rss">Subscribe</a>
+</div>
+<span class="nav-cover"></span>
+
+
+    <div class="site-wrapper">
+
+        
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        
+            <a class="menu-button icon-menu" href="index.html#"><span class="word">Menu</span></a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+    <article class="post tag-react tag-redux tag-typescript">
+
+        <header class="post-header">
+            <h1 class="post-title">React Redux with Typescript</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2016-10-04">04 October 2016</time>  on <a href="../tag/react/">React</a>, <a href="../tag/redux/">Redux</a>, <a href="../tag/typescript/">Typescript</a>
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p>Redux is a perfect candidate for Typescript.  As an app gets larger, with more actions and more complex reducers, it is all too easy to lose the structure of the root state and to pass inappropriate data through action payloads.  Typescript adds a compile time guard against falling into reducer hell.  </p>
+
+<p>Unfortunately, to use typescript straight out of the box with Redux, all the reducers and actions must be explicitly given types that agree with each other.  All this type duplication can just introduce a new place for error and discrepancy.</p>
+
+<p>In a recent project, our team developed a set of utility functions and complementary types and interfaces that allow for strong typing in Redux with a minimum of type and interface duplication.</p>
+
+<p>The pattern has the following benefits:</p>
+
+<ul>
+<li><strong>Strongly Typed Redux</strong> - No more throwing around the wrong payload.</li>
+<li><strong>Only define an action payload's type once</strong> - The type is then inferred in all interested reducers, action creators, and calling components.</li>
+<li><strong>Defined Root State</strong> - Strongly typed state with easily referenceable structure.</li>
+</ul>
+
+<p>To illustrate the pattern and how to use it, I'll walk through a trivial Redux app that implements strong typing.  I'll assume familiarity with React/Redux architecture as well as a webpack build system, but if you'd like a introduction to that, <a href="https://alexzywiak.github.io/react-redux-a-flash-messenger-example/">check out this post</a>.</p>
+
+<p>If, instead, you'd prefer to skip my prosaic meanderings, you can check out the example <a href="https://github.com/alexzywiak/react-redux-typescript">code here on github</a>.</p>
+
+<p>Our app will be a trivial masterpiece consisting of two components, <code>user_buttons</code> and <code>flash_message</code>.  The former will render two buttons that allow the user to dispatch an action and <code>flash_message</code> will subscribe to the state and display the content of a fairly worthless message.</p>
+
+<p>This walkthrough will follow this outline.</p>
+
+<ul>
+<li>File Structure</li>
+<li>Typescript Setup</li>
+<li>Actions</li>
+<li>Reducers</li>
+<li>Wiring Components</li>
+</ul>
+
+<p>Throughout, I'll introduce how to implement a variety of utility functions that will allow our application to easily make use of Typescript's goodness.  I'll focus on the essential helper functions, but will omit some code sections and interfaces for brevity.  Check the example code repo to fill in any holes.</p>
+
+<h3 id="projectstructure">Project Structure</h3>
+
+<p>Our base directory structure is as follows:  </p>
+
+<pre><code>├── actions
+├── app
+├── interfaces
+├── reducers
+└── utils
+</code></pre>
+
+<p>The <code>actions</code> and <code>reducers</code> directories will contain their eponymous redux logic.  The <code>app</code> directory holds our components and <code>interfaces</code> has all interfaces required through our application.  The <code>utils</code> folder will house the specific functions and interfaces that our team developed to allow our project to easily make use of strong typing.  I'll go into more detail of the file structure in the following sections.</p>
+
+<h3 id="typescriptsetup">Typescript Setup</h3>
+
+<p>Setting up Typescript with your React project consists of two steps: adding the correct loader to Webpack and downloading typings files for third party libraries.</p>
+
+<h6 id="webpack">Webpack</h6>
+
+<p>To set up Typescript with Webpack, make use of the <a href="https://github.com/TypeStrong/ts-loader">ts-loader</a> npm package for all <code>.ts</code> and <code>.tsx</code> files.  Then, add in a <a href="https://www.typescriptlang.org/docs/handbook/tsconfig-json.html">tsconfig.json</a> to manage your Typescript settings.  I also made use of the <a href="https://webpack.github.io/docs/webpack-dev-server.html">webpack-dev-server</a> to easily run our app.  Checkout the <a href="https://github.com/alexzywiak/react-redux-typescript">code repo for an example</a>.</p>
+
+<h6 id="typings">Typings</h6>
+
+<p>Conveniently enough, there are a number of high quality type declaration files available so that we can use third party modules with Typescript without having to write the damn things ourselves.  <a href="https://www.npmjs.com/package/typings">Typings</a> is a package similar to <code>npm</code> that allows us to manage our type declaration files.  Install <code>typings</code> as a dev-dependency, and then run the rather unfriendly <code>typings install dt~&lt;libary name&gt; --global --save</code>.  This will grab the typings file for you, and save it to <code>typings.json</code> (a <code>package.json</code> equivalent).  Grab the typings files for all the external libraries and typings will make their interfaces globally available in your project.</p>
+
+<h3 id="actions">Actions</h3>
+
+<p>In our project, we named action files by the section of the application they manipulate.  Our action directory for this example will look like this:</p>
+
+<pre><code>actions  
+└── user_buttons
+    ├── action_types.ts
+    └── actions.ts
+</code></pre>
+
+<p>In our case, only <code>user_buttons</code> is concerned with dispatching actions, but this pattern would be repeated for other sections in larger apps. We'll begin by creating a map of our action constants strings in <code>action_types.ts</code>.  By making use of the <code>createActionConstantsMap</code> and <code>actionType&lt;T&gt;</code> helper functions, we'll be able to create a map of action constants that have properly typed payloads.  This is the core of the strong typing around our Redux state and its actions.</p>
+
+<p>I'll illustrate the use of both helper functions, and then show what they're doing under the hood.</p>
+
+<p>Our app will have one action, <code>SEND_FLASH_MESSAGE</code> which will have a payload of type <code>FlashMessage</code>.  The <code>FlashMessage</code> type will be an object with <code>message</code> and <code>className</code> properties.</p>
+
+<pre><code class="language-typescript">// action_types.ts
+import { FlashMessage } from '../../interfaces/flash_message.interface';  
+import { actionType, createActionConstantsMap } from '../../utils/redux';
+
+export default createActionConstantsMap('userButtons', {  
+  SEND_FLASH_MESSAGE: actionType&lt;FlashMessage&gt;()
+});
+</code></pre>
+
+<p>The <code>actionType&lt;T&gt;</code> function does the necessary type casting for us.  When we pass the action map in <code>action_types.ts</code> to <code>createActionConstantsMap</code>, we need to pass our desired payload structure as the generic argument to <code>actionType&lt;T&gt;</code>.  Here's what <code>actionType</code> is doing in the background.</p>
+
+<pre><code class="language-typescript">// reduxTypes.ts
+
+export function actionType&lt;TPayload&gt;() {  
+  return null as ActionType&lt;TPayload&gt;;
+}
+</code></pre>
+
+<p>This function will cast the value of our action map at that specific key (in our case <code>SEND_FLASH_MESSAGE</code>) as an <code>ActionType&lt;TPayload&gt;</code> type with the given payload interface <em>regardless of the value</em>.  The function will return <code>null</code>, but a properly cast <code>null</code> value for each action key.  </p>
+
+<p>The <code>createActionConstantsMap</code> function will take care of creating an actual string value constant to be passed around and referenced by the reducers.  As it is, the object we pass into <code>createActionConstantsMap</code> in <code>action_types.ts</code>, has a key value <code>SEND_FLASH_MESSAGE</code> and a value of <code>null</code> typed as an <code>ActionType&lt;FlashMessage&gt;</code>.  Null isn't particularly useful for distinguishing actions inside the reducers, so we'll generate a name-spaced string for each key within the <code>createActionConstantsMap</code> function.  </p>
+
+<pre><code class="language-typescript">// actionUtils.ts
+
+export function createActionConstantsMap&lt;T extends ActionTypeMap&gt;(prefix: string, input: T): T {  
+  prefix = prefix.toUpperCase() + '_';
+
+  const map = Object.keys(input).reduce((acc, key) =&gt; {
+    const namespacedActionType = prefix + key;
+    return Object.assign(acc, { [key]: namespacedActionType });
+  }, {}) as T;
+  return map;
+}
+</code></pre>
+
+<p>The typing comes in through a combination of type inference and type casting inside this function.  When we pass our <code>input</code> argument, it has a structure as follows:</p>
+
+<pre><code class="language-typescript">{
+  SEND_FLASH_MESSAGE: null, // Cast as ActionType&lt;FlashMessage&gt;
+}
+</code></pre>
+
+<p>This type is maintained inside <code>createActionConstantsMap</code> as the generic type <code>T</code> which is inferred by Typescript.  Next, we generate an new object with the same key values, but name-spaced strings, and then <strong>cast that object as type <code>T</code></strong>.  This is the key point from whence the typing magic flows.  When we reference the <code>SEND_FLASH_MESSAGE</code> property on the action types map, it has the proper payload interface bound to it.</p>
+
+<h3 id="reducers">Reducers</h3>
+
+<p>We'll write out a single reducer that will manipulate the application state based on our <code>SEND_FLASH_MESSAGE</code> action.</p>
+
+<p>We placed all of our reducer logic inside a single <code>reducers</code> directory split up by roughly by component.  Our directory structure will look as follows:</p>
+
+<pre><code>reducers  
+└── flash_message
+    ├── flash_message_reducer.ts
+    ├── flash_message_selectors.ts
+    ├── flash_message_state.interface.ts
+    └── index.ts
+</code></pre>
+
+<p>I'll walk through the structure and responsibility of each file in turn.  </p>
+
+<h6 id="reducerinterface">Reducer Interface</h6>
+
+<p>We'll first define the structure of the subsection of the root state the flash message reducer deals with.</p>
+
+<pre><code class="language-typescript">// flash_message_state.interface.ts
+
+import { FlashMessage } from '../../interfaces/flash_message.interface';
+
+export interface FlashMessageState {  
+    flashMessage: FlashMessage;
+}
+</code></pre>
+
+<p>These subsections of the root state will be defined for each reducer section and collated into a single <code>RootState</code> interface.</p>
+
+<p>Next, we'll create our reducer making use of some helper functions to maintain strong typing.</p>
+
+<h6 id="reducerlogic">Reducer Logic</h6>
+
+<pre><code class="language-typescript">// flash_message_reducer.ts
+
+import { FlashMessageState } from './flash_message_state.interface';  
+import flashMessageActionTypes from '../../actions/user_buttons/action_types';  
+import { createActionHandler, createReducer } from '../../utils/redux';
+
+const handleAction = createActionHandler&lt;FlashMessageState&gt;();
+
+const handleFlashMessageSent = handleAction(flashMessageActionTypes.SEND_FLASH_MESSAGE, (state, action) =&gt; {  
+    const { message, color } = action.payload;
+    return Object.assign({}, state, {
+        flashMessage: {
+            message,
+            color
+        }
+    });
+});
+
+const initialState: FlashMessageState = {flashMessage: {message: '', color: ''}};
+
+export const flashMessageReducer = createReducer(initialState, [  
+    handleFlashMessageSent
+]);
+</code></pre>
+
+<p>The first thing we need to do is create a function <code>handleAction</code> through the <code>createActionHandler</code> helper function.  <code>createActionHandler</code> will bind a generic type as the state that the reducer interacts with, in this case <code>FlashMessageState</code>.  </p>
+
+<pre><code class="language-typescript">// actionUtils.ts
+...
+export function createActionHandler&lt;TState&gt;() {  
+  return &lt;TPayload&gt;(actionType: ActionType&lt;TPayload&gt;, handler: ActionHandler&lt;TState, TPayload&gt;): TypedActionHandler&lt;TState, TPayload&gt; =&gt; {
+    return Object.assign(handler, { actionType: actionType.toString() });
+  };
+}
+</code></pre>
+
+<p>The <code>handleAction</code> function that is returned, takes the action type we're listening for, imported from our map created earlier, and the reducer handler function which contains the reducer logic.  <code>handleAction</code> will return a new object with a <code>handler</code> property corresponding to the handler function and an <code>actionType</code> property which is the string constant to trigger that reducer logic.  </p>
+
+<p>This function is essential for maintaining the proper typing for the both the state and the action payload.  The handler function is now properly bound to the state type passed in through the <code>createActionHandler</code> function, and the payload type it can expect through the action type argument.  In our case, <code>&lt;TState&gt;</code> is bound to <code>FlashMessageState</code> type after invoking <code>createActionHandler</code>, and <code>&lt;TPayload&gt;</code> is inferred as <code>&lt;FlashMessage&gt;</code> after passing in <code>flashMessageActionTypes.SEND_FLASH_MESSAGE</code>.</p>
+
+<p>Once we have our reducer function, <code>handleFlashMessageSent</code>, we will pass it to our <code>createReducer</code> utility function.  </p>
+
+<p>In addition to handling initial state, <code>createReducer</code> will create a closure around an object variable mapping each of the passed handler's <code>actionType</code> property as a key and each <code>handler</code> function as the value.  </p>
+
+<pre><code class="language-typescript">// reducerUtils.ts
+
+import { Action, Reducer, TypedActionHandler, TypedActionHandlerMap } from './';
+
+interface GetInitialState&lt;T&gt; {  
+    (): T;
+}
+
+export function createReducer&lt;TState&gt;(initialState: TState|GetInitialState&lt;TState&gt;, handlers: TypedActionHandler&lt;TState, any&gt;[]): Reducer&lt;TState&gt; {
+
+  const handlerMap = handlers.reduce((acc, handler) =&gt; {
+    return Object.assign(acc, { [handler.actionType]: handler });
+  }, {} as TypedActionHandlerMap&lt;TState&gt;);
+
+  const getInitialState = typeof initialState === 'function' ? initialState : () =&gt; initialState;
+
+  return (state: TState, action: Action&lt;any&gt;) =&gt; {
+    if (typeof state === 'undefined') {
+      state = getInitialState();
+    }
+
+    const handler = handlerMap[action.type];
+    return handler ? handler(state, action) : state;
+  };
+}
+</code></pre>
+
+<p>The function <code>createReducer</code> returns, then references the passed in action type and invokes the given handler passing in the current state.  All handlers will be composed using this function as a single reducer, and they will in turn be exported and collated into the root reducer.</p>
+
+<h6 id="reducerselectors">Reducer Selectors</h6>
+
+<p>For each reducer, we'll create a set of selectors which we can use to get access to specific data on the state.</p>
+
+<pre><code class="language-typescript">// flash_message_selectors.ts
+
+import { createStateSelector } from '../../utils/redux';
+
+export const getFlashMessage = createStateSelector(state =&gt; state.flashMessage);  
+</code></pre>
+
+<p>We'll import the <code>createStateSelector</code> helper function which will use the <code>reselect</code> library and add some typings.</p>
+
+<pre><code class="language-typescript">// selectorUtils.ts
+
+import { createSelector } from 'reselect';  
+import { SelectorWithoutProps } from './reduxTypes';
+
+export function createStateSelector&lt;TResults&gt;(selector: SelectorWithoutProps&lt;TResults&gt;): SelectorWithoutProps&lt;TResults&gt; {  
+  return selector;
+}
+</code></pre>
+
+<h6 id="createstore">CreateStore</h6>
+
+<p>Once we have all our reducers set up, we'll import them into a <code>createStore</code> function which will combine them together along with our root state and any middleware, and create a store which we can pass to our Provider.</p>
+
+<pre><code class="language-typescript">// createStore.ts
+
+import * as Redux from 'redux';  
+import thunk from 'redux-thunk';  
+import { Dispatch, RootState } from '../utils/redux';  
+import { flashMessageReducer, stateKey as flashMessageStateKey } from '../reducers/flash_message';
+
+const rootReducer = Redux.combineReducers&lt;RootState&gt;({  
+    [flashMessageStateKey]: flashMessageReducer
+});
+
+export interface Store extends Redux.Store&lt;RootState&gt;{  
+    dispatch: Dispatch;
+};
+
+export default (initialState = {}) =&gt; {  
+    const middleWare = Redux.applyMiddleware(thunk);
+    return Redux.createStore&lt;RootState&gt;(rootReducer, initialState as RootState, middleWare);
+};
+</code></pre>
+
+<p><code>createStore</code> will bring in all reducers, in this case just the <code>flashMessageReducer</code>, and map them by a <code>stateKey</code> value which is exported from each reducer's <code>index.ts</code> file.  <code>createStore</code> will also reference the <code>RootState</code> interface where we'll define the structure of our application state.  Each key in the Root State object should map to the <code>stateKey</code> value for each reducer.  In our example, the state key for the flash message reducer is the string <code>'flashMessage'</code> the same key on Root State that this reducer is responsible for.  As more reducers and pieces of state are added, the Root State will expand.  This will give us a single source of truth to reference the structure of our application state.</p>
+
+<pre><code class="language-typescript">// rootState.ts
+
+import { FlashMessageState } from '../../reducers/flash_message';
+
+export interface RootState {  
+    flashMessage: FlashMessageState;
+};
+</code></pre>
+
+<h3 id="wiringupcomponents">Wiring Up Components</h3>
+
+<p>Linking typed state and action creators to the components works very much the same way as it does in plain old javascript Redux. Of our two components <code>flash_message.tsx</code> will be concerned with displaying a state property, and <code>user_buttons.tsx</code> will dispatch our action.  </p>
+
+<p>The third party typings files available for React/Redux do most of the Typescript work for us.  We need to pass component property interfaces into two places.  The first place, when we declare the component, we'll need to pass in an intersection type of a composition of the component's own props, the Redux state props it listens to, and the Redux dispatch props.  The second place we need to pass interfaces in is the <code>connect</code> Redux function.  <code>connect</code> takes in three generic type arguments, <code>connect&lt;TStateProps, TDispatchProps, TOwnProps&gt;</code>.</p>
+
+<p>Out of the box, we would need to define all these interfaces to mirror the types returned from our <code>mapStateToProps</code> and <code>mapDispatchToProps</code> functions.  We can save ourselves some work by using some Typescript type inferencing magic.  The <code>returnType</code> helper function, when given a function as an argument, will return a <code>null</code> value given the same type of the passed function's return type.  </p>
+
+<pre><code class="language-typescript">// typeUtils.ts
+
+interface Func&lt;T&gt; {  
+    ([...args]: any): T;
+}
+
+export function returnType&lt;T&gt;(func: Func&lt;T&gt;) {  
+    return null as T;
+}
+</code></pre>
+
+<p>We can then use Typescripts obscurely named <code>typeof</code> operator to access the type of the <code>null</code> value. In our example, we'll pass in the <code>mapStateToProps</code> and <code>mapDispatchToProps</code> functions to <code>returnType</code> which will automatically infer the type of the Redux state our component is listening to.</p>
+
+<p>In practice, this is what our <code>flash_message</code> component will look like.</p>
+
+<pre><code class="language-typescript">// flash_message.tsx
+
+import * as React from 'react';  
+import { connect } from 'react-redux';  
+import { getFlashMessage } from '../../reducers/flash_message';  
+import { bindActionCreators, RootState, Dispatch, returnType } from '../../utils/redux';
+
+function mapStateToProps(state: RootState) {  
+    return {
+        flashMessage: getFlashMessage(state)
+    };
+}
+
+interface FlashMessageOwnProps {  
+}
+
+const stateGeneric = returnType(mapStateToProps);  
+type FlashMessageStateProps = typeof stateGeneric;  
+type FlashMessageProps = FlashMessageStateProps &amp; FlashMessageOwnProps;
+
+class FlashMessage extends React.Component&lt;FlashMessageProps, {}&gt; { 
+
+    render() {
+        const { color, message} = this.props.flashMessage.flashMessage;
+
+        return (
+            &lt;p style={{color}}&gt;{message}&lt;/p&gt;
+        );
+    }
+}
+
+export default connect&lt;FlashMessageStateProps, {}, FlashMessageOwnProps&gt;(mapStateToProps)(FlashMessage);  
+</code></pre>
+
+<p>For the <code>mapStateToProps</code> function, we'll use a selector function we defined in our reducer directory.</p>
+
+<p>By using <code>returnType</code> and Typescript's <code>typeof</code>, we can inference the return type of <code>mapStateToProps</code> and can appropriately type our component's props.  The <code>user_buttons</code> component works much the same way except we're concerned with the <code>mapDispatchToProps</code> function instead.</p>
+
+<p>At this point, we have all the typed Redux wired up for our trivial little application.  While Typescript has some initial overhead to get over, we've found it a huge help once our components get more complex.  It gives us a compile time guard against passing in woefully inappropriate data into our action creators and allows us to know exactly what our reducers are going to be dealing with.  With a few essential patterns and utility functions, we can greatly reduce the amount of duplication necessary to keep those actions reducing smoothly.</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/alex/">Alex Zywiak</a></h4>
+
+                    <p>Read <a href="../author/alex/">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=React%20Redux%20with%20Typescript&amp;url=http://localhost:2368/react-redux-with-typescript/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/react-redux-with-typescript/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/react-redux-with-typescript/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+
+        </footer>
+
+    </article>
+</main>
+
+<aside class="read-next">
+    <a class="read-next-story prev no-cover" href="../knex-bag-o-functions-modeling-many-to-many-relationships-in-node-2/">
+        <section class="post">
+            <h2>Knex Bag O' Functions - Modeling Many to Many Relationships with Node and PostgreSQL</h2>
+            <p>We began our Node database interactions through the Bookshelf SQL ORM.  It was good to start out with and…</p>
+        </section>
+    </a>
+</aside>
+
+
+
+        <footer class="site-footer clearfix">
+            <section class="copyright"><a href="../">Lingua Franca</a> © 2016</section>
+            <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+        </footer>
+
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=7ff054ed29"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=7ff054ed29"></script>
+     <script type="text/javascript" src="../assets/js/prism.js?v=7ff054ed29"></script>
+
+</body>
